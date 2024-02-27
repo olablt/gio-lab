@@ -84,11 +84,11 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 	}
 	// set key filters
 	for _, k := range a.Keys {
-		t := tag
-		if !a.Focus {
-			t = nil
+		if a.Focus {
+			filters = append(filters, key.Filter{Focus: tag, Name: k})
+		} else {
+			filters = append(filters, key.Filter{Focus: nil, Name: k})
 		}
-		filters = append(filters, key.Filter{Focus: t, Name: k})
 	}
 
 	// New key event reading
@@ -129,8 +129,8 @@ func (a *Area) Pop() {
 }
 
 func main() {
-	Loop(func(win *app.Window, gtx *layout.Context, th *material.Theme) {
-		ChartLayout(*gtx, th)
+	Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
+		ChartLayout(gtx, th)
 	})
 }
 
@@ -185,12 +185,13 @@ var (
 	blue       = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: alpha}
 )
 
+// FillWithLabelH3 creates a label with the specified text and background color
 func FillWithLabelH3(gtx layout.Context, th *material.Theme, text string, backgroundColor color.NRGBA) layout.Dimensions {
 	ColorBox(gtx, gtx.Constraints.Max, backgroundColor)
 	return layout.Center.Layout(gtx, material.H3(th, text).Layout)
 }
 
-// ColorBox creates a widget with the specified dimensions and color.
+// ColorBox creates a box with the specified color
 func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Dimensions {
 	defer clip.Rect{Max: size}.Push(gtx.Ops).Pop()
 	paint.ColorOp{Color: color}.Add(gtx.Ops)
@@ -198,8 +199,8 @@ func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Di
 	return layout.Dimensions{Size: size}
 }
 
-// Metric is a utility to start a rendering, input and metrics gio app.
-func Loop(fn func(win *app.Window, gtx *layout.Context, th *material.Theme)) {
+// Loop is a helper function that runs the app event loop
+func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th := material.NewTheme()
 	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
 	go func() {
@@ -217,7 +218,7 @@ func Loop(fn func(win *app.Window, gtx *layout.Context, th *material.Theme)) {
 				// gtx is used to pass around rendering and event information.
 				gtx := app.NewContext(&ops, e)
 				// render contents
-				fn(w, &gtx, th)
+				fn(w, gtx, th)
 				// render frame
 				e.Frame(gtx.Ops)
 			case app.DestroyEvent:
