@@ -9,8 +9,8 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/font"
+	"gioui.org/font/gofont"
 	"gioui.org/font/opentype"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -20,41 +20,53 @@ import (
 	"gioui.org/widget/material"
 )
 
-func Loop() {
-	// th := material.NewTheme(gofont.Collection())
+type C = layout.Context
+type D = layout.Dimensions
+
+var (
+	colorWhite = color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
+	colorGrey  = color.NRGBA{R: 0x55, G: 0x55, B: 0x55, A: 0xff}
+	colorBlack = color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
+	colorBlue  = color.NRGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
+	colorGreen = color.NRGBA{R: 0x00, G: 0xff, B: 0x00, A: 0xff}
+)
+
+// Loop is a helper function that runs the app event loop
+func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
+	th := material.NewTheme()
+	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	// awsomeFaces, _ := LoadFontToCollection("assets/Consolas Nerd Font.TTF")
+	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(awsomeFaces))
 	go func() {
-		w := app.NewWindow(app.Title("oGio"))
-
-		th := material.NewTheme()
-		// awsomeFaces, _ := LoadFontToCollection("assets/Font Awesome 5 Pro-Light-300.otf")
-		awsomeFaces, _ := LoadFontToCollection("assets/Consolas Nerd Font.TTF")
-		th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(awsomeFaces))
-		// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Regular()))
-		// th.Fg = ui.Alpha(colorBlack, 90)
-		// th.Bg = colorWhite
-
+		w := app.NewWindow(
+			app.Title("oGio"),
+			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
+		)
+		// ops will be used to encode different operations.
 		var ops op.Ops
+
+		// new event queue
 		for {
-			e := <-w.Events()
-			switch e := e.(type) {
-			case system.DestroyEvent:
-				// panic(e.Err)
-				log.Println("au revoir")
-				os.Exit(0)
-			case system.FrameEvent:
-				gtx := layout.NewContext(&ops, e)
-				gtx.Metric = unit.Metric{
-					// PxPerDp: 1.8,
-					// PxPerSp: 1.8,
-					PxPerDp: 4,
-					PxPerSp: 4,
-				}
-				// layout
-				Layout(gtx, th)
-				// render the operation list
+			switch e := w.NextEvent().(type) {
+			case app.FrameEvent:
+				// gtx is used to pass around rendering and event information.
+				gtx := app.NewContext(&ops, e)
+				// render contents
+				fn(w, gtx, th)
+				// render frame
 				e.Frame(gtx.Ops)
+			case app.DestroyEvent:
+				if e.Err != nil {
+					log.Println("got error", e.Err)
+					os.Exit(1)
+				}
+				log.Println("exiting...")
+				os.Exit(0)
+			case app.StageEvent:
+				log.Printf("got stage event %#+v", e.Stage.String())
 			}
 		}
+
 	}()
 	app.Main()
 }

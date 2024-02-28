@@ -1,57 +1,52 @@
 package main
 
 import (
-	"image"
-	"image/color"
 	"log"
-	"strings"
 
+	"gioui.org/app"
+	"gioui.org/io/event"
 	"gioui.org/io/key"
-	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-type C = layout.Context
-type D = layout.Dimensions
+type CommandPalette struct {
+	SearchInput        *widget.Editor
+	List               *widget.List
+	StringList         []string
+	StringListFiltered []string
+	Cursor             int
+}
 
-var (
-	colorWhite = color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
-	colorGrey  = color.NRGBA{R: 0x55, G: 0x55, B: 0x55, A: 0xff}
-	colorBlack = color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
-	colorBlue  = color.NRGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
-	colorGreen = color.NRGBA{R: 0x00, G: 0xff, B: 0x00, A: 0xff}
-)
-var (
-	searchInput widget.Editor
-	list        = layout.List{Axis: layout.Vertical}
-	stringList  = []string{
-		"Orders: Buy Limit",
-		"Orders: Buy Market",
-		"Orders: Sell Limit",
-		"Orders: Sell Market",
-		"Drawing: Trendline",
-		"Drawing: Priceline",
-		"Drawing: Volume Profile",
+func NewCommandPalette() *CommandPalette {
+	cp := &CommandPalette{
+		SearchInput:        &widget.Editor{SingleLine: true, Submit: true, Alignment: text.Start},
+		List:               &widget.List{List: layout.List{Axis: layout.Vertical}},
+		StringList:         []string{},
+		StringListFiltered: []string{},
+		Cursor:             0,
 	}
-	// stringListFiltered fuzzy.Ranks
-	// stringListFiltered = fuzzy.RankFind("", stringList)
-	stringListFiltered = stringList
-	cursor             int
-)
+	cp.StringList = []string{
+		"File: New",
+		"File: Open",
+		"File: Save",
+		"File: Save As",
+		"Edit: Undo",
+		"Edit: Redo",
+		"Edit: Cut",
+		"Format: Indent",
+		"Format: Outdent",
+	}
+	cp.StringListFiltered = cp.StringList
+	return cp
+}
 
-func inputLayout(gtx C, th *material.Theme) D {
+func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
 	// Wrap the editor in material design
-	ed := material.Editor(th, &searchInput, "sec")
-	// Define characteristics of the input box
-	searchInput.SingleLine = true
-	searchInput.Alignment = text.Start
-	searchInput.Submit = true
-	searchInput.Focus()
+	ed := material.Editor(th, cp.SearchInput, "search phrase")
 
 	// Define insets ...
 	margins := layout.Inset{
@@ -69,105 +64,109 @@ func inputLayout(gtx C, th *material.Theme) D {
 	)
 }
 
-func listLayout(gtx C, th *material.Theme) D {
-	inset := layout.UniformInset(unit.Dp(2))
-	return list.Layout(gtx, len(stringListFiltered), func(gtx C, i int) D {
-		return inset.Layout(gtx,
+func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
+	// Define insets for the list items
+	in := layout.Inset{
+		Top:    unit.Dp(0),
+		Right:  unit.Dp(0),
+		Bottom: unit.Dp(5),
+		Left:   unit.Dp(5),
+	}
+	// layout the list
+	return material.List(th, cp.List).Layout(gtx, len(cp.StringListFiltered), func(gtx C, i int) D {
+		return in.Layout(gtx,
 			func(gtx C) D {
 				prefix := ""
-				if cursor == i {
+				if cp.Cursor == i {
 					prefix = "> "
-					// FillWithLabel(gtx, th, "", colorWhite, colorBlack)
 				}
-				return material.Button(th, &widget.Clickable{}, prefix+stringListFiltered[i]).Layout(gtx)
-				// return material.Label(th, unit.Sp(14), prefix+stringListFiltered[i]).Layout(gtx)
+				return material.Button(th, &widget.Clickable{}, prefix+cp.StringListFiltered[i]).Layout(gtx)
 			},
 		)
 	})
 }
 
-func Layout(gtx layout.Context, th *material.Theme) layout.Dimensions {
+func (cp *CommandPalette) Update(gtx layout.Context) {
+	// ColorBox(gtx, image.Point{10, 10}, colorGrey)
+	// handle arrow keys
+	// tag := &cp.List
+	tag := &cp.SearchInput
+	event.Op(gtx.Ops, tag)
 
-	ColorBox(gtx, image.Point{10, 10}, colorGrey)
-	// func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Dimensions {
-	// 	defer clip.Rect{Max: size}.Push(gtx.Ops).Pop()
-	// 	paint.ColorOp{Color: color}.Add(gtx.Ops)
-	// 	paint.PaintOp{}.Add(gtx.Ops)
-	// 	return layout.Dimensions{Size: size}
-	// }
-	// // handle arrow keys
-	tag := &list
-
-	for _, ev := range gtx.Events(tag) {
-		switch e := ev.(type) {
-		case pointer.Event:
-		case key.Event:
-			switch e.State {
-			case key.Press:
-				log.Println(e.Name, "GOT key.Press:", e.Name, e.Modifiers)
-				if e.Modifiers.Contain(key.ModCtrl) {
-					// ctrl is pressed
-				}
-				if e.Name == "↓" || e.Modifiers.Contain(key.ModCtrl) && e.Name == "J" {
-					cursor = cursor + 1
-				}
-				if e.Name == "↑" || e.Modifiers.Contain(key.ModCtrl) && e.Name == "K" {
-					cursor = cursor - 1
-				}
-				if cursor < 0 {
-					cursor = 0
-				}
-				if cursor > len(stringListFiltered)-1 {
-					cursor = len(stringListFiltered) - 1
-				}
-				log.Println("cursor", cursor)
-			case key.Release:
-				//
+	filters := []event.Filter{
+		key.Filter{Name: "↑"},
+		key.Filter{Name: "↓"},
+		key.Filter{Name: "J", Required: key.ModCtrl},
+		key.Filter{Name: "K", Required: key.ModCtrl},
+		// key.FocusFilter{Target: tag},
+		// key.Filter{Focus: tag, Name: "↑"},
+		// key.Filter{Focus: tag, Name: "↓"},
+		// key.Filter{Focus: tag, Name: "J", Required: key.ModCtrl},
+		// key.Filter{Focus: tag, Name: "K", Required: key.ModCtrl},
+	}
+	//	Keys: key.NameEscape + key.Set("|Ctrl-J|←|↓|↑|→|"),
+	// New key event reading
+	for {
+		event, ok := gtx.Event(filters...)
+		if !ok {
+			break
+		}
+		ev, ok := event.(key.Event)
+		if !ok {
+			continue
+		}
+		// handle ev
+		// log.Printf("[DEBUG] got key.%v", ev.Name)
+		if ev.State == key.Press {
+			log.Printf("[DEBUG] got key.%v", ev.Name)
+			if ev.Name == "↓" || ev.Name == "J" {
+				cp.Cursor = cp.Cursor + 1
+			}
+			if ev.Name == "↑" || ev.Name == "K" {
+				cp.Cursor = cp.Cursor - 1
+			}
+			if cp.Cursor < 0 {
+				cp.Cursor = 0
+			}
+			if cp.Cursor > len(cp.StringListFiltered)-1 {
+				cp.Cursor = len(cp.StringListFiltered) - 1
 			}
 		}
 	}
-	key.InputOp{
-		Keys: key.NameEscape + key.Set("|Ctrl-J|←|↓|↑|→|"),
-		Tag:  tag, // Use the window as the event routing tag. This means we can call gtx.Events(w) and get these events.
-	}.Add(gtx.Ops)
-	// for _, e := range gtx.Events(tag) {
-	// 	if e, ok := e.(pointer.Event); ok {
-	// 		switch e.Type {
-	// 		case pointer.Press:
-	// 			// b.pressed = true
-	// 		case pointer.Release:
-	// 			// b.pressed = false
-	// 		}
+
+	// // Handle keyboard input for the search field
+	// for _, ke := range cp.SearchInput.Events() {
+	// 	// log.Printf("%v %+v\n", i, reflect.TypeOf(ke))
+	// 	if _, ok := ke.(widget.ChangeEvent); ok {
+	// 		// on change - filter
+	// 		inputString := searchInput.Text()
+	// 		inputString = strings.TrimSpace(inputString)
+	// 		stringListFiltered = fuzzy.FindNormalizedFold(inputString, stringList)
+	// 		log.Println(stringListFiltered)
+	// 		// reset cursor
+	// 		cursor = 0
+	// 	}
+	// 	if ke, ok := ke.(widget.SubmitEvent); ok {
+	// 		// Process the submitted search query
+	// 		query := strings.TrimSpace(ke.Text)
+	// 		log.Println("got submit query:", query)
 	// 	}
 	// }
+}
 
-	// Handle keyboard input for the search field
-	for _, ke := range searchInput.Events() {
-		// log.Printf("%v %+v\n", i, reflect.TypeOf(ke))
-		if _, ok := ke.(widget.ChangeEvent); ok {
-			// on change - filter
-			inputString := searchInput.Text()
-			inputString = strings.TrimSpace(inputString)
-			stringListFiltered = fuzzy.FindNormalizedFold(inputString, stringList)
-			log.Println(stringListFiltered)
-			// reset cursor
-			cursor = 0
-		}
-		if ke, ok := ke.(widget.SubmitEvent); ok {
-			// Process the submitted search query
-			query := strings.TrimSpace(ke.Text)
-			log.Println("got submit query:", query)
-		}
-	}
+func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
+	gtx.Execute(key.FocusCmd{Tag: cp.SearchInput})
+	// process events
+	cp.Update(gtx)
 
 	// layout everything
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			return inputLayout(gtx, th)
+			return cp.InputLayout(gtx, th)
 		}),
 		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
 			// FillWithLabel(gtx, th, "Black On Grey", colorWhite, colorGrey)
-			return listLayout(gtx, th)
+			return cp.ListLayout(gtx, th)
 		}),
 		// layout.Flexed(0.1, func(gtx layout.Context) layout.Dimensions {
 		// 	return FillWithLabel(gtx, th, "Black On Green", colorBlack, colorGreen)
@@ -176,5 +175,15 @@ func Layout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 }
 
 func main() {
-	Loop()
+	cp := NewCommandPalette()
+	Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
+		gtx.Metric = unit.Metric{
+			PxPerDp: 1.8,
+			PxPerSp: 1.8,
+			// PxPerDp: 4,
+			// PxPerSp: 4,
+		}
+		// layout
+		cp.Layout(gtx, th)
+	})
 }

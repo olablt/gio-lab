@@ -63,7 +63,6 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 				// log
 				log.Printf("[%v] got Pointer.Press", a.Name)
 			case pointer.Enter:
-				// key.FocusCmd{Tag: tag}.Add(gtx.Ops)
 				if a.Focus {
 					gtx.Execute(key.FocusCmd{Tag: tag})
 				}
@@ -229,7 +228,7 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 				log.Println("exiting...")
 				os.Exit(0)
 			case app.StageEvent:
-				log.Printf("got stage event %#+v", e)
+				log.Printf("got stage event %#+v", e.Stage.String())
 			}
 		}
 
