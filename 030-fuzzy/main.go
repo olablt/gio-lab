@@ -1,7 +1,9 @@
 package main
 
 import (
+	"gioui-lab/ui"
 	"log"
+	"strings"
 
 	"gioui.org/app"
 	"gioui.org/io/event"
@@ -11,6 +13,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
 type CommandPalette struct {
@@ -19,6 +22,10 @@ type CommandPalette struct {
 	StringList         []string
 	StringListFiltered []string
 	Cursor             int
+	cache              struct {
+		inputString string
+		inputLen    int
+	}
 }
 
 func NewCommandPalette() *CommandPalette {
@@ -76,14 +83,19 @@ func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 	return material.List(th, cp.List).Layout(gtx, len(cp.StringListFiltered), func(gtx C, i int) D {
 		return in.Layout(gtx,
 			func(gtx C) D {
-				prefix := ""
-				if cp.Cursor == i {
-					prefix = "> "
+				th2 := *th
+				if i != cp.Cursor {
+					th2.Palette.ContrastBg = ui.Alpha(th2.Palette.ContrastBg, 100)
+					th2.Palette.ContrastFg = th.Palette.Fg
 				}
-				return material.Button(th, &widget.Clickable{}, prefix+cp.StringListFiltered[i]).Layout(gtx)
+				return material.Button(&th2, &widget.Clickable{}, cp.StringListFiltered[i]).Layout(gtx)
 			},
 		)
 	})
+}
+
+func (cp *CommandPalette) submit(i int) {
+	log.Printf("[DEBUG] SUBMIT '%v'", cp.StringListFiltered[cp.Cursor])
 }
 
 func (cp *CommandPalette) Update(gtx layout.Context) {
@@ -98,6 +110,7 @@ func (cp *CommandPalette) Update(gtx layout.Context) {
 		key.Filter{Name: "↓"},
 		key.Filter{Name: "J", Required: key.ModCtrl},
 		key.Filter{Name: "K", Required: key.ModCtrl},
+		key.Filter{Name: key.NameReturn},
 		// key.FocusFilter{Target: tag},
 		// key.Filter{Focus: tag, Name: "↑"},
 		// key.Filter{Focus: tag, Name: "↓"},
@@ -118,7 +131,12 @@ func (cp *CommandPalette) Update(gtx layout.Context) {
 		// handle ev
 		// log.Printf("[DEBUG] got key.%v", ev.Name)
 		if ev.State == key.Press {
-			log.Printf("[DEBUG] got key.%v", ev.Name)
+			// log.Printf("[DEBUG] got key.%v", ev.Name)
+			// handle enter
+			if ev.Name == key.NameReturn {
+				cp.submit(cp.Cursor)
+			}
+			// cursor movement
 			if ev.Name == "↓" || ev.Name == "J" {
 				cp.Cursor = cp.Cursor + 1
 			}
@@ -134,23 +152,17 @@ func (cp *CommandPalette) Update(gtx layout.Context) {
 		}
 	}
 
-	// // Handle keyboard input for the search field
-	// for _, ke := range cp.SearchInput.Events() {
-	// 	// log.Printf("%v %+v\n", i, reflect.TypeOf(ke))
-	// 	if _, ok := ke.(widget.ChangeEvent); ok {
-	// 		// on change - filter
-	// 		inputString := searchInput.Text()
-	// 		inputString = strings.TrimSpace(inputString)
-	// 		stringListFiltered = fuzzy.FindNormalizedFold(inputString, stringList)
-	// 		log.Println(stringListFiltered)
-	// 		// reset cursor
-	// 		cursor = 0
-	// 	}
-	// 	if ke, ok := ke.(widget.SubmitEvent); ok {
-	// 		// Process the submitted search query
-	// 		query := strings.TrimSpace(ke.Text)
-	// 		log.Println("got submit query:", query)
-	// 	}
+	cp.SearchInput.Update(gtx)
+	if cp.SearchInput.Text() != cp.cache.inputString {
+		cp.cache.inputString = cp.SearchInput.Text()
+		cp.cache.inputString = strings.TrimSpace(cp.cache.inputString)
+		cp.StringListFiltered = fuzzy.FindNormalizedFold(cp.cache.inputString, cp.StringList)
+		cp.Cursor = 0
+		log.Println("input changed!", cp.cache.inputString)
+	}
+	// if cp.SearchInput.Len() != cp.cache.inputLen {
+	// 	cp.cache.inputLen = cp.SearchInput.Len()
+	// 	log.Println("input changed! len", cp.cache.inputLen)
 	// }
 }
 
@@ -160,7 +172,7 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 	cp.Update(gtx)
 
 	// layout everything
-	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+	d := layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
 			return cp.InputLayout(gtx, th)
 		}),
@@ -172,6 +184,8 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 		// 	return FillWithLabel(gtx, th, "Black On Green", colorBlack, colorGreen)
 		// }),
 	)
+
+	return d
 }
 
 func main() {

@@ -40,8 +40,14 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	go func() {
 		w := app.NewWindow(
 			app.Title("oGio"),
-			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
+			app.Size(unit.Dp(1920/4), unit.Dp(1080/2)),
+			// app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
 		)
+		// w.Option(
+		// 	app.Title("Gio"),
+		// 	app.Size(unit.Dp(400), unit.Dp(600)),
+		// )
+
 		// ops will be used to encode different operations.
 		var ops op.Ops
 
