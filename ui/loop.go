@@ -1,16 +1,12 @@
-package main
+package ui
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"log"
 	"os"
 
 	"gioui.org/app"
-	"gioui.org/font"
-	"gioui.org/font/gofont"
-	"gioui.org/font/opentype"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -23,18 +19,18 @@ import (
 type C = layout.Context
 type D = layout.Dimensions
 
-var (
-	colorWhite = color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
-	colorGrey  = color.NRGBA{R: 0x55, G: 0x55, B: 0x55, A: 0xff}
-	colorBlack = color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
-	colorBlue  = color.NRGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
-	colorGreen = color.NRGBA{R: 0x00, G: 0xff, B: 0x00, A: 0xff}
-)
-
 // Loop is a helper function that runs the app event loop
 func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th := material.NewTheme()
-	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
+	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	// set Github theme
+	th.Palette.Fg = ColorFg
+	th.Palette.Bg = ColorBg
+	th.Palette.ContrastFg = ColorFg
+	th.Palette.ContrastBg = ColorBgAccent
+
+	// awsomeFaces, _ := LoadFontToCollection("assets/Font Awesome 5 Pro-Light-300.otf")
 	// awsomeFaces, _ := LoadFontToCollection("assets/Consolas Nerd Font.TTF")
 	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(awsomeFaces))
 	go func() {
@@ -57,6 +53,9 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 			case app.FrameEvent:
 				// gtx is used to pass around rendering and event information.
 				gtx := app.NewContext(&ops, e)
+				// fill the entire window with the background color
+				defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+				paint.Fill(gtx.Ops, th.Palette.Bg)
 				// render contents
 				fn(w, gtx, th)
 				// render frame
@@ -85,35 +84,10 @@ func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Di
 	return layout.Dimensions{Size: size}
 }
 
-func FillWithLabel(gtx layout.Context, th *material.Theme, text string, fg, bg color.NRGBA) layout.Dimensions {
+func FillWithLabel(gtx layout.Context, th material.Theme, text string, fg, bg color.NRGBA) layout.Dimensions {
 	th.Palette.Fg = fg
 	th.Palette.Bg = bg
-	ColorBox(gtx, gtx.Constraints.Max, bg)
-	return layout.Center.Layout(gtx, material.Label(th, unit.Sp(10), text).Layout)
-}
-
-func LoadFontToCollection(filename string) ([]font.FontFace, error) {
-	// materialTheme := material.NewTheme(gofont.Collection())
-	// load Awesome font
-	fontData, err := os.ReadFile(filename)
-	if err != nil {
-		log.Fatal("Error loading font file:", err)
-	}
-	awsomeFaces, err := opentype.ParseCollection(fontData)
-	if err != nil {
-		panic(fmt.Errorf("failed to parse font: %v", err))
-	}
-	return awsomeFaces, nil
-	// // merge go font and awsome font
-	// faces := []font.FontFace{}
-	// faces = append(gofont.Collection(), awsomeFaces...)
-	// // for i, face := range faces {
-	// // 	log.Println(i, "face", face)
-	// // }
-	// materialTheme := material.NewTheme()
-	// materialTheme.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(faces))
-	// // materialTheme.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
-
-	// // set the theme
-	// // c.Theme = materialTheme
+	ColorBox(gtx, gtx.Constraints.Min, bg)
+	// return layout.Center.Layout(gtx, material.Label(&th, unit.Sp(10), text).Layout)
+	return layout.Center.Layout(gtx, material.Body1(&th, text).Layout)
 }

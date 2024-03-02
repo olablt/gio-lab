@@ -4,33 +4,24 @@ import (
 	"image/color"
 )
 
-// Test Colors.
+// GithubColors
 var (
-	ColorRed   = color.NRGBA{R: 0xC0, G: 0x40, B: 0x40, A: 0xFF}
-	ColorGreen = color.NRGBA{R: 0x40, G: 0xC0, B: 0x40, A: 0xFF}
-	ColorBlue  = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: 0xFF}
-
-	// WB
-	ColorWhite = color.NRGBA{255, 255, 255, 255}
-	ColorBlack = color.NRGBA{0, 0, 0, 255}
-	// BLUE https://www.flatuiColorpicker.com/blue-rgb-color-model/
-	ColorNeonBlue      = color.NRGBA{45, 85, 255, 255}
-	ColorAzureRadiance = color.NRGBA{3, 138, 255, 255}
-	ColorTealBlue      = color.NRGBA{4, 59, 92, 255}
-	ColorBlackPearl    = color.NRGBA{8, 14, 44, 255}
-	ColorShark         = color.NRGBA{36, 37, 42, 255}
-	// Color = color.NRGBA{ , 255}
-
-	// GREY https://www.flatuiColorpicker.com/grey-rgb-color-model/
-	ColorLynch      = color.NRGBA{108, 122, 137, 255}
-	ColorSilverSand = color.NRGBA{189, 195, 199, 255}
-	ColorAthensGray = color.NRGBA{239, 239, 240, 255}
-
-	// YELLOW https://www.flatuiColorpicker.com/color/yellow/
-	ColorWitchHase  = color.NRGBA{255, 246, 143, 255}
-	ColorYellow     = color.NRGBA{240, 255, 0, 255}
-	ColorGinFizz    = color.NRGBA{255, 249, 222, 255}
-	ColorLaserLemon = color.NRGBA{230, 255, 110, 255}
+	// https://primer.style/foundations/primitives/color
+	// ThemeDark
+	// fg
+	// fgColor-default #e6edf3
+	// fgColor-muted #848d97
+	// fgColor-disabled #8b949e
+	// fgColor-link #4493f8
+	// bg
+	// bgColor-default #0d1117
+	// bgColor-accent #1f6feb
+	ColorFg         = Color(0xe6edf3)
+	ColorFgMuted    = Color(0x848d97)
+	ColorFgDisabled = Color(0x8b949e)
+	ColorFgLink     = Color(0x4493f8)
+	ColorBg         = Color(0x0d1117)
+	ColorBgAccent   = Color(0x1f6feb)
 )
 
 // COLOR CONVERSIONS

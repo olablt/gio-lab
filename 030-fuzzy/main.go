@@ -3,25 +3,30 @@ package main
 import (
 	"log"
 
+	"gio.tools/icons"
 	"gioui.org/app"
 	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/unit"
+	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/olablt/gioui-lab/ui"
 )
 
 type Command struct {
 	Name string
 	Func func()
 	Key  key.Filter
+	Icon *widget.Icon
 }
 
 func main() {
+	// icons.ContentSave
 	cp := NewCommandPalette()
 	commands := []Command{
 		{Name: "File: New", Func: nil, Key: key.Filter{Name: "N", Required: key.ModCtrl}},
 		{Name: "File: Open", Func: nil, Key: key.Filter{}},
-		{Name: "File: Save", Func: nil, Key: key.Filter{}},
+		{Name: "File: Save", Func: nil, Key: key.Filter{Name: "S", Required: key.ModCtrl}, Icon: icons.ContentSave},
 		{Name: "File: Save As", Func: nil, Key: key.Filter{}},
 		{Name: "Edit: Undo", Func: nil, Key: key.Filter{}},
 		{Name: "Edit: Redo", Func: nil, Key: key.Filter{}},
@@ -37,10 +42,12 @@ func main() {
 		log.Println("[FIRE] File: New")
 	})
 
-	Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
+	ui.Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
 		gtx.Metric = unit.Metric{
-			PxPerDp: 1.8,
-			PxPerSp: 1.8,
+			PxPerDp: 1.5,
+			PxPerSp: 1.5,
+			// PxPerDp: 1.8,
+			// PxPerSp: 1.8,
 			// PxPerDp: 4,
 			// PxPerSp: 4,
 		}

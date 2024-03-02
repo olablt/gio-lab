@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"gioui-lab/ui"
 	"log"
 	"strings"
 
 	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/layout"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -95,12 +96,14 @@ func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 		return margins.Layout(gtx,
 			func(gtx C) D {
 				th2 := *th
-				if i != cp.cursor {
-					th2.Palette.ContrastBg = ui.Alpha(th2.Palette.ContrastBg, 100)
-					th2.Palette.ContrastFg = th.Palette.Fg
+				// th2.Font.Size = unit.Dp(16)
+				if i == cp.cursor {
+					th2.Palette.Bg = th2.Palette.ContrastBg
+					th2.Palette.Fg = th.Palette.ContrastFg
 				}
 				command := cp.StringListFiltered[i]
 				return ActionListItem(&th2, cp.clickables[command], command, cp.shortcutStrings[command]).Layout(gtx)
+				// return IconActionListItem(&th2, cp.clickables[command], icons.ContentSave, command).Layout(gtx)
 			},
 		)
 	})
@@ -259,15 +262,35 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 	cp.HandleShortcutKeys(gtx)
 	cp.Update(gtx)
 
-	// layout everything
-	d := layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(func(gtx C) D {
-			return cp.InputLayout(gtx, th)
-		}),
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return cp.ListLayout(gtx, th)
-		}),
-	)
+	// defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+	// paint.Fill(gtx.Ops, th.Palette.Bg)
+	// // layout elements
+	// d := layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+	// 	layout.Rigid(func(gtx C) D {
+	// 		return cp.InputLayout(gtx, th)
+	// 	}),
+	// 	layout.Flexed(1, func(gtx layout.Context) D {
+	// 		return cp.ListLayout(gtx, th)
+	// 	}),
+	// )
+	// return d
 
-	return d
+	// apply background
+	return layout.Background{}.Layout(gtx,
+		func(gtx C) D {
+			defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+			paint.Fill(gtx.Ops, th.Palette.Bg)
+			return D{Size: gtx.Constraints.Min}
+		}, func(gtx C) D {
+			// layout elements
+			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Rigid(func(gtx C) D {
+					return cp.InputLayout(gtx, th)
+				}),
+				layout.Flexed(1, func(gtx layout.Context) D {
+					return cp.ListLayout(gtx, th)
+				}),
+			)
+		})
+
 }

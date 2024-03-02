@@ -1,7 +1,7 @@
+// adapted material.Button to ActionListItem
 package main
 
 import (
-	"gioui-lab/030-fuzzy/f32color"
 	"image"
 	"image/color"
 	"math"
@@ -16,6 +16,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/olablt/gioui-lab/ui/f32color"
 )
 
 type ActionListItemStyle struct {
@@ -54,9 +55,9 @@ func ActionListItem(th *material.Theme, button *widget.Clickable, txt, rtxt stri
 	b := ActionListItemStyle{
 		Text:         txt,
 		RText:        rtxt,
-		Color:        th.Palette.ContrastFg,
+		Color:        th.Palette.Fg,
 		CornerRadius: 4,
-		Background:   th.Palette.ContrastBg,
+		Background:   th.Palette.Bg,
 		TextSize:     th.TextSize * 14.0 / 16.0,
 		Inset: layout.Inset{
 			Top: 5, Bottom: 5,
@@ -72,15 +73,15 @@ func ActionListItem(th *material.Theme, button *widget.Clickable, txt, rtxt stri
 func ActionListItemLayout(th *material.Theme, button *widget.Clickable) ActionListItemLayoutStyle {
 	return ActionListItemLayoutStyle{
 		ActionListItem: button,
-		Background:     th.Palette.ContrastBg,
+		Background:     th.Palette.Bg,
 		CornerRadius:   4,
 	}
 }
 
 func IconActionListItem(th *material.Theme, button *widget.Clickable, icon *widget.Icon, description string) IconActionListItemStyle {
 	return IconActionListItemStyle{
-		Background:     th.Palette.ContrastBg,
-		Color:          th.Palette.ContrastFg,
+		Background:     th.Palette.Bg,
+		Color:          th.Palette.Fg,
 		Icon:           icon,
 		Size:           24,
 		Inset:          layout.UniformInset(12),
@@ -116,28 +117,21 @@ func (b ActionListItemStyle) Layout(gtx layout.Context) layout.Dimensions {
 		CornerRadius:   b.CornerRadius,
 		ActionListItem: b.ActionListItem,
 	}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		// return b.Inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		// 	colMacro := op.Record(gtx.Ops)
-		// 	paint.ColorOp{Color: b.Color}.Add(gtx.Ops)
-		// 	return widget.Label{Alignment: text.Start}.Layout(gtx, b.shaper, b.Font, b.TextSize, b.Text, colMacro.Stop())
-		// })
-		// test
+		weight := font.Normal
 		return b.Inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 			return layout.Flex{WeightSum: 2}.Layout(gtx,
-				// Rigid 10x10 widget.
+				// command
 				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-					// fmt.Printf("Rigid: %v\n", gtx.Constraints)
-					// return layoutWidget(gtx, 10, 10)
 					colMacro := op.Record(gtx.Ops)
 					paint.ColorOp{Color: b.Color}.Add(gtx.Ops)
+					b.Font.Weight = weight
 					return widget.Label{Alignment: text.Start}.Layout(gtx, b.shaper, b.Font, b.TextSize, b.Text, colMacro.Stop())
 				}),
-				// Child with 50% space allowance.
+				// shortcut
 				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-					// fmt.Printf("50%%: %v\n", gtx.Constraints)
-					// return layoutWidget(gtx, 10, 10)
 					colMacro := op.Record(gtx.Ops)
 					paint.ColorOp{Color: b.Color}.Add(gtx.Ops)
+					b.Font.Weight = weight
 					return widget.Label{Alignment: text.End}.Layout(gtx, b.shaper, b.Font, b.TextSize, b.RText, colMacro.Stop())
 				}),
 			)
