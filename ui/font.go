@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -26,13 +25,18 @@ func LoadFontCollection() []font.FontFace {
 	// load Roboto fonts
 	faces := []font.FontFace{}
 	// faces = append(faces, LoadFontFace(font.Font{Weight: font.Thin}, "assets/Roboto-Thin.ttf"))
-	faces = append(faces, LoadFontFace(font.Font{}, "assets/Roboto-Light.ttf"))
-	faces = append(faces, LoadFontFace(font.Font{Weight: font.Medium}, "assets/Roboto-Regular.ttf"))
-	faces = append(faces, LoadFontFace(font.Font{Weight: font.Bold}, "assets/Roboto-Medium.ttf"))
-	////
-	//faces = append(faces, LoadFontFace(font.Font{}, "assets/Roboto-Regular.ttf"))
-	//faces = append(faces, LoadFontFace(font.Font{Weight: font.Medium}, "assets/Roboto-Medium.ttf"))
-	//faces = append(faces, LoadFontFace(font.Font{Weight: font.Bold}, "assets/Roboto-Bold.ttf"))
+	// // shifted weights test
+	// faces = append(faces, LoadFontFace(font.Font{}, "assets/Roboto-Light.ttf"))
+	// faces = append(faces, LoadFontFace(font.Font{Weight: font.Medium}, "assets/Roboto-Regular.ttf"))
+	// faces = append(faces, LoadFontFace(font.Font{Weight: font.Bold}, "assets/Roboto-Medium.ttf"))
+	// regular
+	faces = append(faces, LoadFontFace(font.Font{}, "assets/Roboto-Regular.ttf"))
+	faces = append(faces, LoadFontFace(font.Font{Weight: font.Medium}, "assets/Roboto-Medium.ttf"))
+	faces = append(faces, LoadFontFace(font.Font{Weight: font.Bold}, "assets/Roboto-Bold.ttf"))
+
+	// awsomeFaces, _ := LoadFontToCollection("assets/Font Awesome 5 Pro-Light-300.otf")
+	// awsomeFaces, _ := LoadFontToCollection("assets/Consolas Nerd Font.TTF")
+	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(awsomeFaces))
 
 	return faces
 }
@@ -45,7 +49,7 @@ func LoadFontFace(fnt font.Font, filename string) font.FontFace {
 	face, err := opentype.Parse(fontData)
 	// faces, err := opentype.ParseCollection(fontData)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse font: %v", err))
+		log.Fatal("Error parsing font file:", err)
 	}
 	fnt.Typeface = "Go"
 	fontFace := font.FontFace{Font: fnt, Face: face}
@@ -56,7 +60,7 @@ func LoadFontFace(fnt font.Font, filename string) font.FontFace {
 func opentypeParse(fnt font.Font, fontByte []byte) font.FontFace {
 	face, err := opentype.Parse(fontByte)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse font: %v", err))
+		log.Fatal("Failed to parse font:", err)
 	}
 	fnt.Typeface = "Go"
 	fontFace := font.FontFace{Font: fnt, Face: face}

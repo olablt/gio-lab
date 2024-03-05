@@ -1,4 +1,4 @@
-module github.com/olablt/gioui-lab
+module github.com/olablt/gio-lab
 
 go 1.21.6
 

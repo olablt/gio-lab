@@ -30,9 +30,6 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th.Palette.ContrastFg = ColorFg
 	th.Palette.ContrastBg = ColorBgAccent
 
-	// awsomeFaces, _ := LoadFontToCollection("assets/Font Awesome 5 Pro-Light-300.otf")
-	// awsomeFaces, _ := LoadFontToCollection("assets/Consolas Nerd Font.TTF")
-	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(awsomeFaces))
 	go func() {
 		w := app.NewWindow(
 			app.Title("oGio"),
