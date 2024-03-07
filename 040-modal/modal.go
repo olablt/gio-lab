@@ -7,7 +7,7 @@ import (
 	"gioui.org/font"
 	"gioui.org/layout"
 	"gioui.org/widget/material"
-	"github.com/olablt/gioui-lab/ui"
+	"github.com/olablt/gio-lab/ui"
 )
 
 type MyApp struct {

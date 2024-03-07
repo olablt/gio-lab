@@ -88,3 +88,9 @@ func FillWithLabel(gtx layout.Context, th material.Theme, text string, fg, bg co
 	// return layout.Center.Layout(gtx, material.Label(&th, unit.Sp(10), text).Layout)
 	return layout.Center.Layout(gtx, material.Body1(&th, text).Layout)
 }
+
+// FillWithLabelH3 creates a label with the specified text and background color
+func FillWithLabelH3(gtx layout.Context, th *material.Theme, text string, backgroundColor color.NRGBA) layout.Dimensions {
+	ColorBox(gtx, gtx.Constraints.Max, backgroundColor)
+	return layout.Center.Layout(gtx, material.H3(th, text).Layout)
+}

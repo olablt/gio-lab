@@ -16,7 +16,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"github.com/olablt/gioui-lab/ui/f32color"
+	"github.com/olablt/gio-lab/ui/f32color"
 )
 
 type ActionListItemStyle struct {

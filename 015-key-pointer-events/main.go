@@ -1,23 +1,17 @@
 package main
 
 import (
-	"image"
 	"image/color"
 	"log"
-	"os"
 
 	"gioui.org/app"
-	"gioui.org/font/gofont"
 	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
-	"gioui.org/op"
 	"gioui.org/op/clip"
-	"gioui.org/op/paint"
-	"gioui.org/text"
-	"gioui.org/unit"
 	"gioui.org/widget/material"
+	"github.com/olablt/gio-lab/ui"
 	// "gioui.org/widget/material"
 )
 
@@ -128,7 +122,7 @@ func (a *Area) Pop() {
 }
 
 func main() {
-	Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
+	ui.Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
 		ChartLayout(gtx, th)
 	})
 }
@@ -153,13 +147,13 @@ func ChartLayout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				layout.Flexed(0.5, func(gtx layout.Context) layout.Dimensions {
 					chartArea.ProcessEvents(gtx)
 					chartArea.Pop()
-					return FillWithLabelH3(gtx, th, "Chart", green)
+					return ui.FillWithLabelH3(gtx, th, "Chart", green)
 				}),
 				// X Axis AREA
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					xArea.ProcessEvents(gtx)
 					xArea.Pop()
-					return FillWithLabelH3(gtx, th, "X", red)
+					return ui.FillWithLabelH3(gtx, th, "X", red)
 				}),
 			)
 		}),
@@ -167,7 +161,7 @@ func ChartLayout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			yArea.ProcessEvents(gtx)
 			yArea.Pop()
-			return FillWithLabelH3(gtx, th, " Y ", blue)
+			return ui.FillWithLabelH3(gtx, th, " Y ", blue)
 		}),
 	)
 }
@@ -183,55 +177,3 @@ var (
 	green      = color.NRGBA{R: 0x40, G: 0xC0, B: 0x40, A: alpha}
 	blue       = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: alpha}
 )
-
-// FillWithLabelH3 creates a label with the specified text and background color
-func FillWithLabelH3(gtx layout.Context, th *material.Theme, text string, backgroundColor color.NRGBA) layout.Dimensions {
-	ColorBox(gtx, gtx.Constraints.Max, backgroundColor)
-	return layout.Center.Layout(gtx, material.H3(th, text).Layout)
-}
-
-// ColorBox creates a box with the specified color
-func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Dimensions {
-	defer clip.Rect{Max: size}.Push(gtx.Ops).Pop()
-	paint.ColorOp{Color: color}.Add(gtx.Ops)
-	paint.PaintOp{}.Add(gtx.Ops)
-	return layout.Dimensions{Size: size}
-}
-
-// Loop is a helper function that runs the app event loop
-func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
-	th := material.NewTheme()
-	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	go func() {
-		w := app.NewWindow(
-			app.Title("oGio"),
-			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
-		)
-		// ops will be used to encode different operations.
-		var ops op.Ops
-
-		// new event queue
-		for {
-			switch e := w.NextEvent().(type) {
-			case app.FrameEvent:
-				// gtx is used to pass around rendering and event information.
-				gtx := app.NewContext(&ops, e)
-				// render contents
-				fn(w, gtx, th)
-				// render frame
-				e.Frame(gtx.Ops)
-			case app.DestroyEvent:
-				if e.Err != nil {
-					log.Println("got error", e.Err)
-					os.Exit(1)
-				}
-				log.Println("exiting...")
-				os.Exit(0)
-			case app.StageEvent:
-				log.Printf("got stage event %#+v", e.Stage.String())
-			}
-		}
-
-	}()
-	app.Main()
-}

@@ -10,7 +10,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"github.com/olablt/gioui-lab/ui"
+	"github.com/olablt/gio-lab/ui"
 )
 
 type Command struct {
