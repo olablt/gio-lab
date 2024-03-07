@@ -9,7 +9,6 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
-	"gioui.org/gesture"
 	"gioui.org/io/event"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
@@ -24,7 +23,6 @@ import (
 var imageOp = paint.NewImageOp(qasset.Neutral)
 var imageLocation = f32.Pt(300, 300)
 var pointerLocation = f32.Pt(300, 300)
-var drag gesture.Drag
 
 // func main() { qapp.Layout(MyLayout) }
 func main() {
@@ -36,28 +34,49 @@ func main() {
 
 // MyLayout handles rendering and input
 func MyLayout(gtx layout.Context) layout.Dimensions {
-	tag := 0x01
+	winTag := 0x01
+	imgTag := 0x02
 
 	// 1.a PROCESS drag EVENTS
 	var dragOffset f32.Point
 	for {
-		ev, ok := drag.Update(gtx.Metric, gtx.Source, gesture.Both)
+		event, ok := gtx.Event(
+			pointer.Filter{
+				Target: imgTag,
+				Kinds:  pointer.Press | pointer.Enter | pointer.Leave | pointer.Move | pointer.Drag | pointer.Release,
+			},
+		)
 		if !ok {
 			break
 		}
-		log.Printf("got drag event %v %+v", ev.Kind.String(), ev)
-		switch ev.Kind {
-		case pointer.Drag, pointer.Release, pointer.Press:
-			dragOffset = ev.Position.Sub(f32.Pt(50, 50))
-			// pointerLocation = ev.Position
+		ev, ok := event.(pointer.Event)
+		if ok {
+			// handle ev
+			log.Printf("got pointer event %v", ev.Kind.String())
+			switch ev.Kind {
+			case pointer.Drag, pointer.Release, pointer.Press:
+				dragOffset = ev.Position.Sub(f32.Pt(50, 50))
+			}
 		}
 	}
+	// for {
+	// 	ev, ok := drag.Update(gtx.Metric, gtx.Source, gesture.Both)
+	// 	if !ok {
+	// 		break
+	// 	}
+	// 	log.Printf("got drag event %v %+v", ev.Kind.String(), ev)
+	// 	switch ev.Kind {
+	// 	case pointer.Drag, pointer.Release, pointer.Press:
+	// 		dragOffset = ev.Position.Sub(f32.Pt(50, 50))
+	// 		// pointerLocation = ev.Position
+	// 	}
+	// }
 
 	// 1.b PROCESS pointer EVENTS
 	for {
 		event, ok := gtx.Event(
 			pointer.Filter{
-				Target: tag,
+				Target: winTag,
 				Kinds:  pointer.Press | pointer.Enter | pointer.Leave | pointer.Move | pointer.Drag | pointer.Release,
 			},
 		)
@@ -74,11 +93,12 @@ func MyLayout(gtx layout.Context) layout.Dimensions {
 			}
 		}
 	}
-	event.Op(gtx.Ops, tag)
 
 	// 2. LAYOUT
 	// register window area
 	winArea := clip.Rect(image.Rectangle{Max: gtx.Constraints.Max}).Push(gtx.Ops)
+	// retister winTag for input events inside the window
+	event.Op(gtx.Ops, winTag)
 
 	// update the offset, must be after drag.Events
 	imageLocation = imageLocation.Add(dragOffset)
@@ -86,8 +106,9 @@ func MyLayout(gtx layout.Context) layout.Dimensions {
 
 	// register image area for input events
 	imageArea := clip.Rect{Max: imageOp.Size()}.Push(gtx.Ops) //.Pop()
-	pointer.CursorGrab.Add(gtx.Ops)                           // set mouse cursor
-	drag.Add(gtx.Ops)
+	// retister imgTag for input events inside the window
+	event.Op(gtx.Ops, imgTag)
+	pointer.CursorGrab.Add(gtx.Ops) // set mouse cursor
 	imageArea.Pop()
 
 	// draw the image
