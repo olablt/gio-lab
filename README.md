@@ -1,4 +1,4 @@
-[toc]
+
 
 ## GioUI Links
 
@@ -61,3 +61,19 @@ gofmt -w -r 'system.Insets -> app.Insets' .
 ### Foundation Zurb
 
 - https://get.foundation/sites/docs/kitchen-sink.html#0
+
+
+## Hardware Specs
+
+```bash
+OS: Rocky Linux 9.3 (Blue Onyx) x86_64
+Host: B760I AORUS PRO DDR4 -CF
+Kernel: 5.14.0-362.13.1.el9_3.x86_64
+Resolution: 3840x2160
+WM: i3
+CPU: 13th Gen Intel i7-13700KF (24) @ 5.300GHz
+GPU: NVIDIA GeForce RTX 4090
+Memory: 7398MiB / 31659MiB
+Nvidia Driver Version: 545.23.08
+CUDA Version: 12.3
+```

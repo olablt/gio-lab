@@ -128,6 +128,8 @@ func MyLayout(gtx layout.Context) layout.Dimensions {
 	return layout.Dimensions{Size: gtx.Constraints.Max}
 }
 
+// fixed drag example by implementing Input Tree
+
 func drawRect(x, y int, w, h int, gtx layout.Context) {
 	defer op.Offset(image.Point{X: x, Y: y}).Push(gtx.Ops).Pop()
 	defer clip.Rect{Max: image.Pt(w, h)}.Push(gtx.Ops).Pop()
