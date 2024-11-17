@@ -142,12 +142,24 @@ var (
 	SpaceUnit  DP = 8
 	BorderSize DP = 1
 
+	// Spacer widgets
+	WSpacer1 = SpacerWidget(SpaceUnit)
+	WSpacer2 = SpacerWidget(SpaceUnit * 2)
+	WSpacer3 = SpacerWidget(SpaceUnit * 3)
+
 	fonts = gofont.Collection()
-	// fontShaper = text.NewShaper(fonts)
 	fontShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	// th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	// th         = material.NewTheme(fonts)
 )
+
+// SpacerWidget creates a widget with specified spacing
+func SpacerWidget(size unit.Dp) layout.Widget {
+	return func(gtx C) D {
+		return D{Size: image.Point{
+			X: gtx.Dp(size),
+			Y: gtx.Dp(size),
+		}}
+	}
+}
 
 func myLayout(gtx C) W {
 
