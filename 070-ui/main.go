@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"gioui.org/app"
+	"gioui.org/io/key"
 	"gioui.org/f32"
 	"gioui.org/font/gofont"
 	"gioui.org/layout"
@@ -350,7 +351,7 @@ func Centered(w layout.Widget) layout.Widget {
 	return func(gtx layout.Context) layout.Dimensions {
 		dims := w(gtx)
 		position := layout.FPt(gtx.Constraints.Min).Sub(layout.FPt(dims.Size).Mul(0.5))
-		defer op.Offset(position).Push(gtx.Ops).Pop()
+		defer op.Offset(position.Round()).Push(gtx.Ops).Pop()
 		return dims
 	}
 }
