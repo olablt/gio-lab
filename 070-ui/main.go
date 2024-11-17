@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"gioui.org/app"
-	"gioui.org/io/key"
 	"gioui.org/f32"
 	"gioui.org/font/gofont"
+	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -22,7 +22,7 @@ import (
 
 type appState struct {
 	columnWidgets []widget.Clickable
-	showModal    bool
+	showModal     bool
 }
 
 func main() {
@@ -41,7 +41,7 @@ func runApp(w *app.Window) error {
 	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
 	state := &appState{
 		columnWidgets: make([]widget.Clickable, 6),
-		showModal:    false,
+		showModal:     false,
 	}
 
 	var ops op.Ops
@@ -50,12 +50,15 @@ func runApp(w *app.Window) error {
 		switch e := w.Event().(type) {
 		case app.DestroyEvent:
 			return e.Err
+
 		case key.Event:
 			if e.State == key.Press {
 				switch {
 				case e.Name == key.NameEscape:
+					log.Println("ESC pressed")
 					state.showModal = false
 				case e.Modifiers.Contain(key.ModCtrl) && e.Name == "O":
+					log.Println("Ctrl+O pressed")
 					state.showModal = true
 				}
 			}
