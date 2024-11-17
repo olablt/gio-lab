@@ -21,6 +21,7 @@ import (
 
 type appState struct {
 	columnWidgets []widget.Clickable
+	showModal    bool
 }
 
 func main() {
@@ -37,9 +38,10 @@ func main() {
 func runApp(w *app.Window) error {
 	th := material.NewTheme()
 	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	// aState := appState{
-	// 	columnWidgets: make([]widget.Clickable, 6),
-	// }
+	state := &appState{
+		columnWidgets: make([]widget.Clickable, 6),
+		showModal:    false,
+	}
 
 	var ops op.Ops
 
@@ -47,6 +49,15 @@ func runApp(w *app.Window) error {
 		switch e := w.Event().(type) {
 		case app.DestroyEvent:
 			return e.Err
+		case key.Event:
+			if e.State == key.Press {
+				switch {
+				case e.Name == key.NameEscape:
+					state.showModal = false
+				case e.Modifiers.Contain(key.ModCtrl) && e.Name == "O":
+					state.showModal = true
+				}
+			}
 		case app.FrameEvent:
 			// Reset the operations
 			ops.Reset()
@@ -55,18 +66,36 @@ func runApp(w *app.Window) error {
 			// xyGridLayout(gtx, th, &aState)
 			// myLayout(gtx)
 
-			Rows(
+			layout := Rows(
 				Rigid(
 					AlignMiddle(
 						FontSize(22)(
 							Label("Opapa"), // one line text
 						),
 					),
-					// Text("Opapa"),
 				),
-
 				Flexed(1, myLayout(gtx)),
-			)(gtx)
+			)
+
+			if state.showModal {
+				layout = Stack(
+					layout,
+					Centered(
+						Background(color.NRGBA{A: 200}, // semi-transparent overlay
+							Border(
+								Inset(unit.Dp(20),
+									Rows(
+										Rigid(Label("Modal Window")),
+										Rigid(Label("Press ESC to close")),
+									),
+								),
+							),
+						),
+					),
+				)
+			}
+
+			layout(gtx)
 
 			e.Frame(gtx.Ops)
 		}
@@ -305,4 +334,29 @@ func createRow(gtx C, th *material.Theme, aState *appState, columns []int) []lay
 		})
 	}
 	return children
+}
+
+func Stack(layers ...layout.Widget) layout.Widget {
+	return func(gtx layout.Context) layout.Dimensions {
+		dims := layers[0](gtx)
+		for _, layer := range layers[1:] {
+			layer(gtx)
+		}
+		return dims
+	}
+}
+
+func Centered(w layout.Widget) layout.Widget {
+	return func(gtx layout.Context) layout.Dimensions {
+		dims := w(gtx)
+		position := layout.FPt(gtx.Constraints.Min).Sub(layout.FPt(dims.Size).Mul(0.5))
+		defer op.Offset(position).Push(gtx.Ops).Pop()
+		return dims
+	}
+}
+
+func Inset(inset unit.Dp, w layout.Widget) layout.Widget {
+	return func(gtx layout.Context) layout.Dimensions {
+		return layout.UniformInset(inset).Layout(gtx, w)
+	}
 }
