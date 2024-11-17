@@ -104,7 +104,7 @@ func runApp(w *app.Window) error {
 			}
 
 			// Add key.InputOp to handle key events
-			keyFilter.Op(gtx.Ops)
+			key.InputOp{Tag: w, Keys: keyFilter}.Add(gtx.Ops)
 
 			layout(gtx)
 
