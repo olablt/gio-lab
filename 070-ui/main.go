@@ -45,7 +45,7 @@ func runApp(w *app.Window) error {
 	}
 
 	var ops op.Ops
-	
+
 	// Set up key filter for the events we want to handle
 	keyFilter := key.Filter{
 		Required: key.ModCtrl,
@@ -105,7 +105,7 @@ func runApp(w *app.Window) error {
 
 			// Add key.InputOp to handle key events
 			keyFilter.Op(gtx.Ops)
-			
+
 			layout(gtx)
 
 			e.Frame(gtx.Ops)
