@@ -43,9 +43,9 @@ func main() {
 }
 
 func Loop(fn func(win *app.Window, gtx layout.Context)) {
-
 	go func() {
-		w := app.NewWindow(
+		w := app.Window{}
+		w.Option(
 			app.Title("oGio"),
 			app.Size(unit.Dp(1920/4), unit.Dp(1080/2)),
 		)
@@ -54,12 +54,12 @@ func Loop(fn func(win *app.Window, gtx layout.Context)) {
 		var ops op.Ops
 		// new event queue
 		for {
-			switch e := w.NextEvent().(type) {
+			switch e := w.Event().(type) {
 			case app.FrameEvent:
 				// gtx is used to pass around rendering and event information.
 				gtx := app.NewContext(&ops, e)
 				// render contents
-				fn(w, gtx)
+				fn(&w, gtx)
 				// render frame
 				e.Frame(gtx.Ops)
 			case app.DestroyEvent:
@@ -69,8 +69,9 @@ func Loop(fn func(win *app.Window, gtx layout.Context)) {
 				}
 				log.Println("exiting...")
 				os.Exit(0)
-			case app.StageEvent:
-				log.Printf("got stage event %#+v", e.Stage.String())
+			// case app.StageEvent:
+			case app.ConfigEvent:
+				log.Printf("got config event Focused:%v", e.Config.Focused)
 			}
 		}
 

@@ -1,3 +1,5 @@
 *.ttf
 *.TTF
 *.otf
+.aider*
+.env

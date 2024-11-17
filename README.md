@@ -76,4 +76,5 @@ GPU: NVIDIA GeForce RTX 4090
 Memory: 7398MiB / 31659MiB
 Nvidia Driver Version: 545.23.08
 CUDA Version: 12.3
+gioui.org v0.5.0
 ```

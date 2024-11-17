@@ -19,7 +19,6 @@ import (
 type C = layout.Context
 type D = layout.Dimensions
 
-// Loop is a helper function that runs the app event loop
 func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th := material.NewTheme()
 	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
@@ -31,22 +30,18 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th.Palette.ContrastBg = ColorBgAccent
 
 	go func() {
-		w := app.NewWindow(
+		w := &app.Window{}
+		w.Option(
 			app.Title("oGio"),
 			app.Size(unit.Dp(1920/4), unit.Dp(1080/2)),
-			// app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
 		)
-		// w.Option(
-		// 	app.Title("Gio"),
-		// 	app.Size(unit.Dp(400), unit.Dp(600)),
-		// )
 
 		// ops will be used to encode different operations.
 		var ops op.Ops
 
 		// new event queue
 		for {
-			switch e := w.NextEvent().(type) {
+			switch e := w.Event().(type) {
 			case app.FrameEvent:
 				// gtx is used to pass around rendering and event information.
 				gtx := app.NewContext(&ops, e)
@@ -64,8 +59,8 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 				}
 				log.Println("exiting...")
 				os.Exit(0)
-			case app.StageEvent:
-				log.Printf("got stage event %#+v", e.Stage.String())
+			case app.ConfigEvent:
+				log.Printf("got config event Focused:%v", e.Config.Focused)
 			}
 		}
 
