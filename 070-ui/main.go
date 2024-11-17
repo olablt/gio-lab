@@ -45,6 +45,12 @@ func runApp(w *app.Window) error {
 	}
 
 	var ops op.Ops
+	
+	// Set up key filter for the events we want to handle
+	keyFilter := key.Filter{
+		Required: key.ModCtrl,
+		Optional: key.ModShift,
+	}
 
 	for {
 		switch e := w.Event().(type) {
@@ -52,15 +58,13 @@ func runApp(w *app.Window) error {
 			return e.Err
 
 		case key.Event:
-			if e.State == key.Press {
-				switch {
-				case e.Name == key.NameEscape:
-					log.Println("ESC pressed")
-					state.showModal = false
-				case e.Modifiers.Contain(key.ModCtrl) && e.Name == "O":
-					log.Println("Ctrl+O pressed")
-					state.showModal = true
-				}
+			switch {
+			case e.State == key.Press && e.Name == key.NameEscape:
+				log.Println("ESC pressed")
+				state.showModal = false
+			case e.State == key.Press && e.Name == "O" && e.Modifiers.Contain(key.ModCtrl):
+				log.Println("Ctrl+O pressed")
+				state.showModal = true
 			}
 		case app.FrameEvent:
 			// Reset the operations
@@ -99,6 +103,9 @@ func runApp(w *app.Window) error {
 				)
 			}
 
+			// Add key.InputOp to handle key events
+			keyFilter.Op(gtx.Ops)
+			
 			layout(gtx)
 
 			e.Frame(gtx.Ops)
