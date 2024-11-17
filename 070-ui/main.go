@@ -46,26 +46,39 @@ func runApp(w *app.Window) error {
 
 	var ops op.Ops
 
-	// Set up key filter for the events we want to handle
-	keyFilter := key.Filter{
-		Required: key.ModCtrl,
-		Optional: key.ModShift,
-	}
-
+	var keys []key.Event
 	for {
-		switch e := w.Event().(type) {
-		case app.DestroyEvent:
-			return e.Err
-
-		case key.Event:
-			switch {
-			case e.State == key.Press && e.Name == key.NameEscape:
-				log.Println("ESC pressed")
-				state.showModal = false
-			case e.State == key.Press && e.Name == "O" && e.Modifiers.Contain(key.ModCtrl):
-				log.Println("Ctrl+O pressed")
-				state.showModal = true
-			}
+		select {
+		case e := <-w.Events():
+			switch e := e.(type) {
+			case app.DestroyEvent:
+				return e.Err
+			case key.Event:
+				switch e.State {
+				case key.Press:
+					keys = append(keys, e)
+				case key.Release:
+					var filtered []key.Event
+					for _, k := range keys {
+						if k.Name != e.Name {
+							filtered = append(filtered, k)
+						}
+					}
+					keys = filtered
+				}
+				// Handle key events
+				for _, k := range keys {
+					switch k.Name {
+					case key.NameEscape:
+						log.Println("ESC pressed")
+						state.showModal = false
+					case "O":
+						if k.Modifiers.Contain(key.ModCtrl) {
+							log.Println("Ctrl+O pressed")
+							state.showModal = true
+						}
+					}
+				}
 		case app.FrameEvent:
 			// Reset the operations
 			ops.Reset()
@@ -103,8 +116,8 @@ func runApp(w *app.Window) error {
 				)
 			}
 
-			// Add key.InputOp to handle key events
-			key.InputOp{Tag: w, Keys: keyFilter}.Add(gtx.Ops)
+			// Add key.InputOp to handle all key events
+			key.InputOp{Tag: w}.Add(gtx.Ops)
 
 			layout(gtx)
 
