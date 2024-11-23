@@ -8,6 +8,7 @@ import (
 	"gioui.org/font"
 	"gioui.org/io/event"
 	"gioui.org/io/key"
+	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
@@ -175,6 +176,18 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 				return layout.Center.Layout(gtx, func(gtx C) D {
 					size := layout.Dimensions{Size: image.Pt(300, 100)}
 					gtx.Constraints.Min = size.Size
+
+					// Create a separate clip area for modal to prevent click-through
+					modalArea := clip.Rect{Max: size.Size}.Push(gtx.Ops)
+					defer modalArea.Pop()
+
+					// Stop event propagation for the modal area
+					event.Op(gtx.Ops, &a.showModal)
+					pointer.InputOp{
+						Tag:   &a.showModal,
+						Types: pointer.Press,
+					}.Add(gtx.Ops)
+
 					return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
 				})
 			})
