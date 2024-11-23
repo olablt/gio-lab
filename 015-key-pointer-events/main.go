@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image"
 	"image/color"
 	"log"
 	"os"
@@ -40,10 +39,7 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 	// Confine the area of interest to a gtx Max
 	a.areaStack = clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops)
 
-	// Add pointer area
-	pointer.Rect(image.Rectangle{Max: gtx.Constraints.Max}).Add(gtx.Ops)
-
-	// new input op 
+	// new input op
 	event.Op(gtx.Ops, tag)
 
 	// New pointer event reading
