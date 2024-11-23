@@ -150,7 +150,7 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 
 			// Center the modal
 			return layout.Center.Layout(gtx, func(gtx C) D {
-				return ui.FillWithLabel(gtx, *th, "Press ESC to close", ui.ColorFg, ui.ColorBgAccent)
+				return ui.FillWithLabel(gtx, *th, "Press ESC to close", th.Palette.ContrastFg, th.Palette.ContrastBg)
 			})
 		})
 
