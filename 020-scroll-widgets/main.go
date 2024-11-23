@@ -107,13 +107,13 @@ type (
 func (a *MyApp) listing(gtx layout.Context) layout.Dimensions {
 
 	widgets := []layout.Widget{
-		// Header
+		// Header - first widget
 		func(gtx C) D {
 			l := material.H4(a.theme, "Hello, Gio!")
 			// l.State = topLabelState
 			return l.Layout(gtx)
 		},
-		// Image
+		// Image - second widget
 		func(gtx C) D {
 			recAlpha := op.Record(gtx.Ops)
 			imDims := a.image.Layout(gtx) // store the image dimensions
@@ -121,11 +121,13 @@ func (a *MyApp) listing(gtx layout.Context) layout.Dimensions {
 
 			// clip the image to rounded corners
 			defer clip.UniformRRect(image.Rectangle{Max: imDims.Size}, 25).Push(gtx.Ops).Pop()
-			// paint.PaintOp{}.Add(gtx.Ops)
 			// overlay the image
 			alpha.Add(gtx.Ops)
-			// overlay the semi transparent rectangle
-			ColorBox(gtx, image.Pt(imDims.Size.X, int(float64(imDims.Size.X)*0.1)), color.NRGBA{R: 0x20, G: 0x20, B: 0x20, A: 200})
+			// overlay the semi transparent rectangle at the bottom
+			rectHeight := int(float64(imDims.Size.X) * 0.1)
+			offset := op.Offset(image.Pt(0, imDims.Size.Y-rectHeight)).Push(gtx.Ops)
+			ColorBox(gtx, image.Pt(imDims.Size.X, rectHeight), color.NRGBA{R: 0x20, G: 0x20, B: 0x20, A: 200})
+			offset.Pop()
 			return layout.Dimensions{Size: imDims.Size}
 
 			// radius := unit.Dp(4) // Set the radius for the rounded corners. Adjust this value as needed.
@@ -142,8 +144,10 @@ func (a *MyApp) listing(gtx layout.Context) layout.Dimensions {
 			// // The image will be clipped to rounded corners, but retains its original size.
 			// return layout.Dimensions{Size: imDims.Size}
 		},
+		// third widget
 		func(gtx C) D {
 			col := color.NRGBA{R: byte((1 + 5) * 20), G: 0x20, B: 0x20, A: 0xFF}
+			defer clip.UniformRRect(image.Rectangle{Max: gtx.Constraints.Max}, 25).Push(gtx.Ops).Pop()
 			return ColorBox(gtx, image.Pt(gtx.Constraints.Max.X, 300), col)
 		},
 		func(gtx C) D {
