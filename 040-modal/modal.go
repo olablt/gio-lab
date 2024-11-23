@@ -2,7 +2,6 @@ package main
 
 import (
 	"image"
-	"log"
 
 	"gioui.org/font"
 	"gioui.org/io/key"
@@ -11,8 +10,8 @@ import (
 	"github.com/olablt/gio-lab/ui"
 )
 
-type C = layout.Context
-type D = layout.Dimensions
+// type C = layout.Context
+// type D = layout.Dimensions
 
 type MyApp struct {
 	Inset     layout.Inset
