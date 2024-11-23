@@ -5,21 +5,45 @@ import (
 	"log"
 
 	"gioui.org/font"
+	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/widget/material"
 	"github.com/olablt/gio-lab/ui"
 )
 
+type C = layout.Context
+type D = layout.Dimensions
+
 type MyApp struct {
-	Inset layout.Inset
+	Inset     layout.Inset
+	showModal bool
 }
 
 // new MyApp
 func NewMyApp() *MyApp {
 	a := &MyApp{
-		Inset: layout.UniformInset(12),
+		Inset:     layout.UniformInset(12),
+		showModal: false,
 	}
 	return a
+}
+
+func (a *MyApp) HandleKeyEvents(gtx layout.Context) {
+	// Handle keyboard shortcuts
+	for _, e := range gtx.Events(a) {
+		if e, ok := e.(key.Event); ok {
+			if e.State == key.Press {
+				switch e.Name {
+				case key.NameEscape:
+					a.showModal = false
+				case "O":
+					if e.Modifiers.Contain(key.ModCtrl) {
+						a.showModal = true
+					}
+				}
+			}
+		}
+	}
 }
 
 // LayoutMainWindow
@@ -67,27 +91,26 @@ func (a *MyApp) LayoutMainWindow(gtx C, th *material.Theme) layout.Dimensions {
 
 // Layout
 func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
-	// return widget.Label{}.Layout(gtx, "Hello, Gio!")
-	// l := material.H1(th, "Hello, Gio")
-	// return l.Layout(gtx)
-	log.Printf("main gtx %+v", gtx.Constraints)
+	// Handle keyboard events
+	key.InputOp{Tag: a}.Add(gtx.Ops)
+	a.HandleKeyEvents(gtx)
 
 	return layout.Background{}.Layout(gtx,
 		func(gtx layout.Context) layout.Dimensions {
 			return a.LayoutMainWindow(gtx, th)
-			// defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
-			// paint.Fill(gtx.Ops, ui.ColorBg)
-			// return layout.Dimensions{Size: gtx.Constraints.Min}
-		}, func(gtx layout.Context) layout.Dimensions {
-			log.Printf("modal gtx %+v", gtx.Constraints)
-			// return ui.ColorBox(gtx, image.Pt(500, 300), ui.ColorBgAccent)
-			// func FillWithLabel(gtx layout.Context, th *material.Theme, text string, fg, bg color.NRGBA) layout.Dimensions {
+		},
+		func(gtx layout.Context) layout.Dimensions {
+			if !a.showModal {
+				return layout.Dimensions{}
+			}
+
 			size := layout.Dimensions{Size: image.Pt(300, 100)}
 			gtx.Constraints.Min = size.Size
-			// gtx.Constraints.Max = size.Size
-			ui.FillWithLabel(gtx, *th, "Modal", ui.ColorFg, ui.ColorBgAccent)
-			return size
-			// return layout.Dimensions{Size: image.Pt(300, 100)}
+
+			// Center the modal
+			return layout.Center.Layout(gtx, func(gtx C) D {
+				return ui.FillWithLabel(gtx, *th, "Press ESC to close", ui.ColorFg, ui.ColorBgAccent)
+			})
 		})
 
 }
