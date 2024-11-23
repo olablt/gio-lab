@@ -3,13 +3,19 @@ package main
 import (
 	"image/color"
 	"log"
+	"os"
 
 	"gioui.org/app"
+	"gioui.org/font/gofont"
 	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/op/clip"
+	"gioui.org/op/paint"
+	"gioui.org/text"
+	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"github.com/olablt/gio-lab/ui"
 	// "gioui.org/widget/material"
@@ -51,7 +57,7 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 		ev, ok := event.(pointer.Event)
 		if ok {
 			// handle ev
-			// log.Printf("got pointer event %#+v", ev)
+			log.Printf("got pointer event %#+v", ev)
 			switch ev.Kind {
 			case pointer.Press:
 				a.PointerPress = true
@@ -129,7 +135,7 @@ func (a *Area) Pop() {
 }
 
 func main() {
-	ui.Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
+	Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
 		ChartLayout(gtx, th)
 	})
 }
@@ -197,4 +203,50 @@ func darkenColor(c color.NRGBA, focused bool) color.NRGBA {
 		B: uint8(float64(c.B) * 0.75),
 		A: c.A,
 	}
+}
+
+func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
+	th := material.NewTheme()
+	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
+	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	// set Github theme
+	th.Palette.Fg = color.NRGBA{R: 0xe6, G: 0xed, B: 0xf3, A: 0xff}
+
+	go func() {
+		w := &app.Window{}
+		w.Option(
+			app.Title("oGio"),
+			app.Size(unit.Dp(1920/4), unit.Dp(1080/2)),
+		)
+
+		// ops will be used to encode different operations.
+		var ops op.Ops
+
+		// new event queue
+		for {
+			switch e := w.Event().(type) {
+			case app.FrameEvent:
+				// gtx is used to pass around rendering and event information.
+				gtx := app.NewContext(&ops, e)
+				// fill the entire window with the background color
+				defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+				paint.Fill(gtx.Ops, th.Palette.Bg)
+				// render contents
+				fn(w, gtx, th)
+				// render frame
+				e.Frame(gtx.Ops)
+			case app.DestroyEvent:
+				if e.Err != nil {
+					log.Println("got error", e.Err)
+					os.Exit(1)
+				}
+				log.Println("exiting...")
+				os.Exit(0)
+			case app.ConfigEvent:
+				log.Printf("got config event Focused:%v", e.Config.Focused)
+			}
+		}
+
+	}()
+	app.Main()
 }
