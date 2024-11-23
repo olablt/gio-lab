@@ -165,7 +165,10 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 				return layout.Dimensions{}
 			}
 
-			// Draw clickable overlay
+			// Create a modal clickable
+			modalClick := &widget.Clickable{}
+
+			// Draw clickable semitransparent overlay
 			a.overlay.Layout(gtx, func(gtx C) D {
 				// Draw semi-transparent background
 				defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
@@ -176,34 +179,17 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 				return size
 			})
 
-			// Draw centered modal
+			// Draw centered modal with its own clickable
 			return layout.Center.Layout(gtx, func(gtx C) D {
 				size := layout.Dimensions{Size: image.Pt(300, 100)}
 				gtx.Constraints.Min = size.Size
 
-				// Create a separate clip area for modal to prevent click-through
-				modalArea := clip.Rect{Max: size.Size}.Push(gtx.Ops)
-				defer modalArea.Pop()
-
-				return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
+				return modalClick.Layout(gtx, func(gtx C) D {
+					// Create a separate clip area for modal
+					defer clip.Rect{Max: size.Size}.Push(gtx.Ops).Pop()
+					return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
+				})
 			})
-
-			// // First draw semi-transparent overlay covering whole screen
-			// defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
-			// paint.ColorOp{Color: color.NRGBA{A: 245}}.Add(gtx.Ops) // Alpha 200 for semi-transparency
-			// paint.PaintOp{}.Add(gtx.Ops)
-
-			// // ui.FillWithLabel(gtx, *th, "Modal", ui.ColorFg, ui.ColorBgAccent)
-			// // size := layout.Dimensions{Size: image.Pt(300, 100)}
-			// // gtx.Constraints.Min = size.Size
-			// // return size
-
-			// // Then draw centered modal
-			// return layout.Center.Layout(gtx, func(gtx C) D {
-			// 	size := layout.Dimensions{Size: image.Pt(300, 100)}
-			// 	gtx.Constraints.Min = size.Size
-			// 	return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
-			// })
 
 		})
 
