@@ -11,6 +11,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"github.com/olablt/gio-lab/ui"
 )
@@ -21,6 +22,7 @@ import (
 type MyApp struct {
 	Inset     layout.Inset
 	showModal bool
+	overlay   widget.Clickable
 }
 
 // new MyApp
@@ -157,26 +159,41 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 				return layout.Dimensions{}
 			}
 
-			// First draw semi-transparent overlay covering whole screen
-			defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
-			paint.ColorOp{Color: color.NRGBA{A: 245}}.Add(gtx.Ops) // Alpha 200 for semi-transparency
-			paint.PaintOp{}.Add(gtx.Ops)
+			// Handle overlay clicks
+			if a.overlay.Clicked(gtx) {
+				a.showModal = false
+			}
 
-			// ui.FillWithLabel(gtx, *th, "Modal", ui.ColorFg, ui.ColorBgAccent)
-			// size := layout.Dimensions{Size: image.Pt(300, 100)}
-			// gtx.Constraints.Min = size.Size
-			// return size
+			// Draw clickable overlay
+			return a.overlay.Layout(gtx, func(gtx C) D {
+				// Draw semi-transparent background
+				defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
+				paint.ColorOp{Color: color.NRGBA{A: 200}}.Add(gtx.Ops)
+				paint.PaintOp{}.Add(gtx.Ops)
 
-			// Then draw centered modal
-			return layout.Center.Layout(gtx, func(gtx C) D {
-				size := layout.Dimensions{Size: image.Pt(300, 100)}
-				gtx.Constraints.Min = size.Size
-				return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
+				// Draw centered modal
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					size := layout.Dimensions{Size: image.Pt(300, 100)}
+					gtx.Constraints.Min = size.Size
+					return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
+				})
 			})
 
-			// // Center the modal
+			// // First draw semi-transparent overlay covering whole screen
+			// defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
+			// paint.ColorOp{Color: color.NRGBA{A: 245}}.Add(gtx.Ops) // Alpha 200 for semi-transparency
+			// paint.PaintOp{}.Add(gtx.Ops)
+
+			// // ui.FillWithLabel(gtx, *th, "Modal", ui.ColorFg, ui.ColorBgAccent)
+			// // size := layout.Dimensions{Size: image.Pt(300, 100)}
+			// // gtx.Constraints.Min = size.Size
+			// // return size
+
+			// // Then draw centered modal
 			// return layout.Center.Layout(gtx, func(gtx C) D {
-			// 	return ui.FillWithLabel(gtx, *th, "Press ESC to close", ui.ColorFg, ui.ColorBgAccent)
+			// 	size := layout.Dimensions{Size: image.Pt(300, 100)}
+			// 	gtx.Constraints.Min = size.Size
+			// 	return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
 			// })
 
 		})
