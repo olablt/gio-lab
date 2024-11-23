@@ -2,6 +2,7 @@ package main
 
 import (
 	"image"
+	"image/color"
 	"log"
 
 	"gioui.org/font"
@@ -9,6 +10,7 @@ import (
 	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 	"gioui.org/widget/material"
 	"github.com/olablt/gio-lab/ui"
 )
@@ -41,47 +43,57 @@ func (a *MyApp) HandleKeyEvents(gtx layout.Context) {
 	event.Op(gtx.Ops, tag)
 
 	// New key event reading
-	filters := []event.Filter{}
-	// set key filters
-	keys := []key.Name{key.NameEscape, key.NameReturn, "Q", "O"}
-	for _, k := range keys {
-		filters = append(filters, key.Filter{Focus: nil, Name: k})
-	}
-
-	// New key event reading
-	// a.KeyPress = false
 	for {
-		event, ok := gtx.Event(filters...)
+		// Read the next event
+		event, ok := gtx.Event(
+			key.Filter{
+				Required: key.ModCtrl,
+				Name:     "O",
+			},
+			key.Filter{
+				Name: "Q",
+			},
+			key.Filter{
+				Name: "O",
+			},
+			key.Filter{
+				Name: key.NameEscape,
+			},
+			key.Filter{
+				Name: key.NameEnter,
+			},
+		)
 		if !ok {
 			break
 		}
+		// filter key events
 		ev, ok := event.(key.Event)
 		if !ok {
 			continue
 		}
-		// handle ev
-		if ev.State == key.Press {
-			// log.Printf("[%v] got key event %#+v", ev)
-			switch ev.Name {
-			case key.NameEscape:
-				// log
-				log.Printf("got key.Escape")
-				a.showModal = false
-			case key.NameReturn:
-				// log
-				log.Printf("got key.Return")
-				a.showModal = false
-			case "O":
-				log.Println("got key.O")
-				if ev.Modifiers.Contain(key.ModCtrl) {
-					a.showModal = true
-				}
+
+		switch ev.Name {
+		case key.NameEscape:
+			// log
+			log.Printf("got key.Escape")
+			a.showModal = false
+		case key.NameReturn:
+			// log
+			log.Printf("got key.Return")
+			a.showModal = false
+		case "O":
+			if ev.Modifiers.Contain(key.ModCtrl) {
+				log.Println("got Ctrl + key.O")
 				a.showModal = true
-			default:
-				// log
-				log.Printf("got key.%v", ev.Name)
+			} else {
+				log.Println("got key.O")
+				a.showModal = true
 			}
+		default:
+			// log
+			log.Printf("got key.%v", ev.Name)
 		}
+		// }
 	}
 
 	areaStack.Pop()
@@ -145,13 +157,28 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 				return layout.Dimensions{}
 			}
 
-			size := layout.Dimensions{Size: image.Pt(300, 100)}
-			gtx.Constraints.Min = size.Size
+			// First draw semi-transparent overlay covering whole screen
+			defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
+			paint.ColorOp{Color: color.NRGBA{A: 245}}.Add(gtx.Ops) // Alpha 200 for semi-transparency
+			paint.PaintOp{}.Add(gtx.Ops)
 
-			// Center the modal
+			// ui.FillWithLabel(gtx, *th, "Modal", ui.ColorFg, ui.ColorBgAccent)
+			// size := layout.Dimensions{Size: image.Pt(300, 100)}
+			// gtx.Constraints.Min = size.Size
+			// return size
+
+			// Then draw centered modal
 			return layout.Center.Layout(gtx, func(gtx C) D {
-				return ui.FillWithLabel(gtx, *th, "Press ESC to close", th.Palette.ContrastFg, th.Palette.ContrastBg)
+				size := layout.Dimensions{Size: image.Pt(300, 100)}
+				gtx.Constraints.Min = size.Size
+				return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
 			})
+
+			// // Center the modal
+			// return layout.Center.Layout(gtx, func(gtx C) D {
+			// 	return ui.FillWithLabel(gtx, *th, "Press ESC to close", ui.ColorFg, ui.ColorBgAccent)
+			// })
+
 		})
 
 }
