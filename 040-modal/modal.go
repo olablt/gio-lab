@@ -28,25 +28,21 @@ func (a *MyApp) LayoutMainWindow(gtx C, th *material.Theme) layout.Dimensions {
 		return layout.Flex{Axis: layout.Vertical, WeightSum: 3}.Layout(gtx,
 			// row 1
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				// colMacro := op.Record(gtx.Ops)
-				// paint.ColorOp{Color: b.Color}.Add(gtx.Ops)
-				// b.Font.Weight = weight
-				// return widget.Label{Alignment: text.Start}.Layout(gtx, b.shaper, b.Font, b.TextSize, b.Text, colMacro.Stop())
 				l := material.H1(th, "Hello, Gio")
 				return l.Layout(gtx)
 			}),
-			// // row
-			// layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			// 	l := material.Label(th, th.TextSize*14.0/16.0, "Thin weight label")
-			// 	l.Font.Weight = font.Thin
-			// 	return l.Layout(gtx)
-			// }),
-			// // row
-			// layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			// 	l := material.Label(th, th.TextSize*14.0/16.0, "Light weight label")
-			// 	l.Font.Weight = font.Light
-			// 	return l.Layout(gtx)
-			// }),
+			// row
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				l := material.Label(th, th.TextSize*14.0/16.0, "Thin weight label")
+				l.Font.Weight = font.Thin
+				return l.Layout(gtx)
+			}),
+			// row
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				l := material.Label(th, th.TextSize*14.0/16.0, "Light weight label")
+				l.Font.Weight = font.Light
+				return l.Layout(gtx)
+			}),
 			// row
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				l := material.Label(th, th.TextSize*14.0/16.0, "Normal weight label")
