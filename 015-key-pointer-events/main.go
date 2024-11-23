@@ -78,6 +78,10 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 				// Handle the same way as Leave
 				log.Printf("[%v] got Pointer.Cancel (window leave)", a.Name)
 				a.StatusFocused = false
+			case pointer.Transfer:
+				// Handle the same way as Leave
+				log.Printf("[%v] got Pointer.Cancel (window leave)", a.Name)
+				a.StatusFocused = false
 			}
 		}
 	}
