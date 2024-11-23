@@ -2,10 +2,13 @@ package main
 
 import (
 	"image"
+	"log"
 
 	"gioui.org/font"
+	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/layout"
+	"gioui.org/op/clip"
 	"gioui.org/widget/material"
 	"github.com/olablt/gio-lab/ui"
 )
@@ -22,27 +25,66 @@ type MyApp struct {
 func NewMyApp() *MyApp {
 	a := &MyApp{
 		Inset:     layout.UniformInset(12),
-		showModal: false,
+		showModal: true,
 	}
 	return a
 }
 
 func (a *MyApp) HandleKeyEvents(gtx layout.Context) {
+	// Declare the tag.
+	tag := a
+
+	// Confine the area of interest to a gtx Max
+	areaStack := clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops)
+
 	// Handle keyboard shortcuts
-	for _, e := range gtx.Events(a) {
-		if e, ok := e.(key.Event); ok {
-			if e.State == key.Press {
-				switch e.Name {
-				case key.NameEscape:
-					a.showModal = false
-				case "O":
-					if e.Modifiers.Contain(key.ModCtrl) {
-						a.showModal = true
-					}
+	event.Op(gtx.Ops, tag)
+
+	// New key event reading
+	filters := []event.Filter{}
+	// set key filters
+	keys := []key.Name{key.NameEscape, key.NameReturn, "Q", "O"}
+	for _, k := range keys {
+		filters = append(filters, key.Filter{Focus: nil, Name: k})
+	}
+
+	// New key event reading
+	// a.KeyPress = false
+	for {
+		event, ok := gtx.Event(filters...)
+		if !ok {
+			break
+		}
+		ev, ok := event.(key.Event)
+		if !ok {
+			continue
+		}
+		// handle ev
+		if ev.State == key.Press {
+			// log.Printf("[%v] got key event %#+v", ev)
+			switch ev.Name {
+			case key.NameEscape:
+				// log
+				log.Printf("got key.Escape")
+				a.showModal = false
+			case key.NameReturn:
+				// log
+				log.Printf("got key.Return")
+				a.showModal = false
+			case "O":
+				log.Println("got key.O")
+				if ev.Modifiers.Contain(key.ModCtrl) {
+					a.showModal = true
 				}
+				a.showModal = true
+			default:
+				// log
+				log.Printf("got key.%v", ev.Name)
 			}
 		}
 	}
+
+	areaStack.Pop()
 }
 
 // LayoutMainWindow
@@ -91,7 +133,7 @@ func (a *MyApp) LayoutMainWindow(gtx C, th *material.Theme) layout.Dimensions {
 // Layout
 func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 	// Handle keyboard events
-	key.InputOp{Tag: a}.Add(gtx.Ops)
+	// key.InputOp{Tag: a}.Add(gtx.Ops)
 	a.HandleKeyEvents(gtx)
 
 	return layout.Background{}.Layout(gtx,
