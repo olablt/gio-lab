@@ -168,18 +168,15 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 			// Create a modal clickable
 			modalClick := &widget.Clickable{}
 
-			// Draw clickable semitransparent overlay
+			// Draw semi-transparent overlay with click handler
 			a.overlay.Layout(gtx, func(gtx C) D {
-				// Draw semi-transparent background
 				defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
 				paint.ColorOp{Color: color.NRGBA{A: 200}}.Add(gtx.Ops)
 				paint.PaintOp{}.Add(gtx.Ops)
-
-				size := layout.Dimensions{Size: gtx.Constraints.Max}
-				return size
+				return layout.Dimensions{Size: gtx.Constraints.Max}
 			})
 
-			// Draw centered modal with its own clickable
+			// Draw modal on top with its own click handler
 			return layout.Center.Layout(gtx, func(gtx C) D {
 				size := layout.Dimensions{Size: image.Pt(300, 100)}
 				gtx.Constraints.Min = size.Size
@@ -187,6 +184,7 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 				return modalClick.Layout(gtx, func(gtx C) D {
 					// Create a separate clip area for modal
 					defer clip.Rect{Max: size.Size}.Push(gtx.Ops).Pop()
+					// pointer.CursorPointer.Add(gtx.Ops) // Add pointer cursor for modal
 					return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
 				})
 			})
