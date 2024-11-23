@@ -127,6 +127,21 @@ func (a *MyApp) listing(gtx layout.Context) layout.Dimensions {
 			rectHeight := int(float64(imDims.Size.X) * 0.1)
 			offset := op.Offset(image.Pt(0, imDims.Size.Y-rectHeight)).Push(gtx.Ops)
 			ColorBox(gtx, image.Pt(imDims.Size.X, rectHeight), color.NRGBA{R: 0x20, G: 0x20, B: 0x20, A: 200})
+
+			// add the text
+			// Add text inside the rectangle
+			textInset := layout.Inset{
+				Top:   unit.Dp(float32(rectHeight) * 0.1),
+				Left:  unit.Dp(10),
+				Right: unit.Dp(10),
+			}
+			textSize := unit.Sp(float32(rectHeight) * 0.3) // Text size proportional to rectangle height
+			label := material.Label(a.theme, textSize, "Vartai")
+			label.Color = color.NRGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // White text
+			textInset.Layout(gtx, func(gtx C) D {
+				return label.Layout(gtx)
+			})
+
 			offset.Pop()
 			return layout.Dimensions{Size: imDims.Size}
 
@@ -147,8 +162,9 @@ func (a *MyApp) listing(gtx layout.Context) layout.Dimensions {
 		// third widget
 		func(gtx C) D {
 			col := color.NRGBA{R: byte((1 + 5) * 20), G: 0x20, B: 0x20, A: 0xFF}
-			defer clip.UniformRRect(image.Rectangle{Max: gtx.Constraints.Max}, 25).Push(gtx.Ops).Pop()
-			return ColorBox(gtx, image.Pt(gtx.Constraints.Max.X, 300), col)
+			size := image.Pt(gtx.Constraints.Max.X, 300)
+			defer clip.UniformRRect(image.Rectangle{Max: size}, 25).Push(gtx.Ops).Pop()
+			return ColorBox(gtx, size, col)
 		},
 		func(gtx C) D {
 			col := color.NRGBA{R: byte((1 + 5) * 20), G: 0x20, B: 0x20, A: 0xFF}
