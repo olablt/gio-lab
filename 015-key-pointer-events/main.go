@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"image/color"
 	"log"
 	"os"
@@ -39,7 +40,10 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 	// Confine the area of interest to a gtx Max
 	a.areaStack = clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops)
 
-	// new input op
+	// Add pointer area
+	pointer.Rect(image.Rectangle{Max: gtx.Constraints.Max}).Add(gtx.Ops)
+
+	// new input op 
 	event.Op(gtx.Ops, tag)
 
 	// New pointer event reading
@@ -48,7 +52,7 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 		event, ok := gtx.Event(
 			pointer.Filter{
 				Target: tag,
-				Kinds:  pointer.Press | pointer.Enter | pointer.Leave,
+				Kinds:  pointer.Press | pointer.Enter | pointer.Leave | pointer.Cancel,
 			},
 		)
 		if !ok {
@@ -75,10 +79,6 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 				log.Printf("[%v] got Pointer.Leave", a.Name)
 				a.StatusFocused = false
 			case pointer.Cancel:
-				// Handle the same way as Leave
-				log.Printf("[%v] got Pointer.Cancel (window leave)", a.Name)
-				a.StatusFocused = false
-			case pointer.Transfer:
 				// Handle the same way as Leave
 				log.Printf("[%v] got Pointer.Cancel (window leave)", a.Name)
 				a.StatusFocused = false
