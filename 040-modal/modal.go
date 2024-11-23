@@ -155,13 +155,13 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 			return a.LayoutMainWindow(gtx, th)
 		},
 		func(gtx layout.Context) layout.Dimensions {
-			if !a.showModal {
-				return layout.Dimensions{}
-			}
-
 			// Handle overlay clicks
 			if a.overlay.Clicked(gtx) {
 				a.showModal = false
+			}
+
+			if !a.showModal {
+				return layout.Dimensions{}
 			}
 
 			// Draw clickable overlay
