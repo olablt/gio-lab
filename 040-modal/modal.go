@@ -8,7 +8,6 @@ import (
 	"gioui.org/font"
 	"gioui.org/io/event"
 	"gioui.org/io/key"
-	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
@@ -158,6 +157,7 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 		func(gtx layout.Context) layout.Dimensions {
 			// Handle overlay clicks
 			if a.overlay.Clicked(gtx) {
+				log.Println("overlay clicked")
 				a.showModal = false
 			}
 
@@ -166,30 +166,26 @@ func (a *MyApp) Layout(gtx C, th *material.Theme) layout.Dimensions {
 			}
 
 			// Draw clickable overlay
-			return a.overlay.Layout(gtx, func(gtx C) D {
+			a.overlay.Layout(gtx, func(gtx C) D {
 				// Draw semi-transparent background
 				defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
 				paint.ColorOp{Color: color.NRGBA{A: 200}}.Add(gtx.Ops)
 				paint.PaintOp{}.Add(gtx.Ops)
 
-				// Draw centered modal
-				return layout.Center.Layout(gtx, func(gtx C) D {
-					size := layout.Dimensions{Size: image.Pt(300, 100)}
-					gtx.Constraints.Min = size.Size
+				size := layout.Dimensions{Size: gtx.Constraints.Max}
+				return size
+			})
 
-					// Create a separate clip area for modal to prevent click-through
-					modalArea := clip.Rect{Max: size.Size}.Push(gtx.Ops)
-					defer modalArea.Pop()
+			// Draw centered modal
+			return layout.Center.Layout(gtx, func(gtx C) D {
+				size := layout.Dimensions{Size: image.Pt(300, 100)}
+				gtx.Constraints.Min = size.Size
 
-					// Stop event propagation for the modal area
-					event.Op(gtx.Ops, &a.showModal)
-					pointer.InputOp{
-						Tag:   &a.showModal,
-						Types: pointer.Press,
-					}.Add(gtx.Ops)
+				// Create a separate clip area for modal to prevent click-through
+				modalArea := clip.Rect{Max: size.Size}.Push(gtx.Ops)
+				defer modalArea.Pop()
 
-					return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
-				})
+				return ui.FillWithLabel(gtx, *th, "Modal", th.Palette.ContrastFg, th.Palette.ContrastBg)
 			})
 
 			// // First draw semi-transparent overlay covering whole screen
