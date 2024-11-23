@@ -26,7 +26,8 @@ func newMyApp() *MyApp {
 }
 
 func (a *MyApp) createWindow() {
-	w := app.NewWindow()
+	// w := app.NewWindow()
+	w := new(app.Window)
 	w.Option(
 		app.Title("Gio"),
 		app.Size(unit.Dp(600), unit.Dp(400)),
@@ -37,7 +38,7 @@ func (a *MyApp) createWindow() {
 func (a *MyApp) loop(w *app.Window) error {
 	var ops op.Ops
 	for {
-		switch e := w.NextEvent().(type) {
+		switch e := w.Event().(type) {
 		case app.DestroyEvent:
 			log.Println("[INFO] DestroyEvent")
 			return e.Err

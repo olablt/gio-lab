@@ -88,7 +88,8 @@ func LoadFontToCollection(filename string) ([]font.FontFace, error) {
 
 func Loop() {
 	go func() {
-		w := app.NewWindow(app.Title("oGio"))
+		// w := app.NewWindow(app.Title("oGio"))
+		w := new(app.Window)
 
 		th := material.NewTheme()
 		// awsomeFaces, _ := LoadFontToCollection("assets/Font Awesome 5 Pro-Light-300.otf")
@@ -100,7 +101,7 @@ func Loop() {
 
 		var ops op.Ops
 		for {
-			switch e := w.NextEvent().(type) {
+			switch e := w.Event().(type) {
 			case app.DestroyEvent:
 				panic(e.Err)
 			case app.FrameEvent:

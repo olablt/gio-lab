@@ -9,7 +9,6 @@ import (
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/font/gofont"
-	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -22,7 +21,6 @@ import (
 
 type appState struct {
 	columnWidgets []widget.Clickable
-	showModal     bool
 }
 
 func main() {
@@ -39,46 +37,16 @@ func main() {
 func runApp(w *app.Window) error {
 	th := material.NewTheme()
 	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	state := &appState{
-		columnWidgets: make([]widget.Clickable, 6),
-		showModal:     false,
-	}
+	// aState := appState{
+	// 	columnWidgets: make([]widget.Clickable, 6),
+	// }
 
 	var ops op.Ops
 
-	var keys []key.Event
 	for {
-		select {
-		case e := <-w.Events():
-			switch e := e.(type) {
-			case app.DestroyEvent:
-				return e.Err
-			case key.Event:
-				switch e.State {
-				case key.Press:
-					keys = append(keys, e)
-				case key.Release:
-					var filtered []key.Event
-					for _, k := range keys {
-						if k.Name != e.Name {
-							filtered = append(filtered, k)
-						}
-					}
-					keys = filtered
-				}
-				// Handle key events
-				for _, k := range keys {
-					switch k.Name {
-					case key.NameEscape:
-						log.Println("ESC pressed")
-						state.showModal = false
-					case "O":
-						if k.Modifiers.Contain(key.ModCtrl) {
-							log.Println("Ctrl+O pressed")
-							state.showModal = true
-						}
-					}
-				}
+		switch e := w.Event().(type) {
+		case app.DestroyEvent:
+			return e.Err
 		case app.FrameEvent:
 			// Reset the operations
 			ops.Reset()
@@ -87,39 +55,18 @@ func runApp(w *app.Window) error {
 			// xyGridLayout(gtx, th, &aState)
 			// myLayout(gtx)
 
-			layout := Rows(
+			Rows(
 				Rigid(
 					AlignMiddle(
 						FontSize(22)(
 							Label("Opapa"), // one line text
 						),
 					),
+					// Text("Opapa"),
 				),
+
 				Flexed(1, myLayout(gtx)),
-			)
-
-			if state.showModal {
-				layout = Stack(
-					layout,
-					Centered(
-						Background(color.NRGBA{A: 200}, // semi-transparent overlay
-							Border(
-								Inset(unit.Dp(20),
-									Rows(
-										Rigid(Label("Modal Window")),
-										Rigid(Label("Press ESC to close")),
-									),
-								),
-							),
-						),
-					),
-				)
-			}
-
-			// Add key.InputOp to handle all key events
-			key.InputOp{Tag: w}.Add(gtx.Ops)
-
-			layout(gtx)
+			)(gtx)
 
 			e.Frame(gtx.Ops)
 		}
@@ -142,24 +89,12 @@ var (
 	SpaceUnit  DP = 8
 	BorderSize DP = 1
 
-	// Spacer widgets
-	WSpacer1 = SpacerWidget(SpaceUnit)
-	WSpacer2 = SpacerWidget(SpaceUnit * 2)
-	WSpacer3 = SpacerWidget(SpaceUnit * 3)
-
 	fonts = gofont.Collection()
+	// fontShaper = text.NewShaper(fonts)
 	fontShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+	// th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+	// th         = material.NewTheme(fonts)
 )
-
-// SpacerWidget creates a widget with specified spacing
-func SpacerWidget(size unit.Dp) layout.Widget {
-	return func(gtx C) D {
-		return D{Size: image.Point{
-			X: gtx.Dp(size),
-			Y: gtx.Dp(size),
-		}}
-	}
-}
 
 func myLayout(gtx C) W {
 
@@ -370,29 +305,4 @@ func createRow(gtx C, th *material.Theme, aState *appState, columns []int) []lay
 		})
 	}
 	return children
-}
-
-func Stack(layers ...layout.Widget) layout.Widget {
-	return func(gtx layout.Context) layout.Dimensions {
-		dims := layers[0](gtx)
-		for _, layer := range layers[1:] {
-			layer(gtx)
-		}
-		return dims
-	}
-}
-
-func Centered(w layout.Widget) layout.Widget {
-	return func(gtx layout.Context) layout.Dimensions {
-		dims := w(gtx)
-		position := layout.FPt(gtx.Constraints.Min).Sub(layout.FPt(dims.Size).Mul(0.5))
-		defer op.Offset(position.Round()).Push(gtx.Ops).Pop()
-		return dims
-	}
-}
-
-func Inset(inset unit.Dp, w layout.Widget) layout.Widget {
-	return func(gtx layout.Context) layout.Dimensions {
-		return layout.UniformInset(inset).Layout(gtx, w)
-	}
 }

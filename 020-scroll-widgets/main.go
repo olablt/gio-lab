@@ -69,7 +69,7 @@ func (a *MyApp) loadImage(path string) {
 }
 
 func (a *MyApp) createWindow() {
-	w := app.NewWindow()
+	w := new(app.Window)
 	w.Option(
 		app.Title("Gio"),
 		app.Size(unit.Dp(400), unit.Dp(600)),
@@ -80,7 +80,7 @@ func (a *MyApp) createWindow() {
 func (a *MyApp) loop(w *app.Window) error {
 	var ops op.Ops
 	for {
-		switch e := w.NextEvent().(type) {
+		switch e := w.Event().(type) {
 		case app.DestroyEvent:
 			log.Println("[INFO] DestroyEvent")
 			return e.Err
@@ -107,21 +107,25 @@ type (
 func (a *MyApp) listing(gtx layout.Context) layout.Dimensions {
 
 	widgets := []layout.Widget{
+		// Header
 		func(gtx C) D {
 			l := material.H4(a.theme, "Hello, Gio!")
 			// l.State = topLabelState
 			return l.Layout(gtx)
 		},
+		// Image
 		func(gtx C) D {
 			recAlpha := op.Record(gtx.Ops)
-			imDims := a.image.Layout(gtx)
+			imDims := a.image.Layout(gtx) // store the image dimensions
 			alpha := recAlpha.Stop()
 
-			// return imDims
+			// clip the image to rounded corners
 			defer clip.UniformRRect(image.Rectangle{Max: imDims.Size}, 25).Push(gtx.Ops).Pop()
-			paint.PaintOp{}.Add(gtx.Ops)
+			// paint.PaintOp{}.Add(gtx.Ops)
+			// overlay the image
 			alpha.Add(gtx.Ops)
-			ColorBox(gtx, image.Pt(imDims.Size.X, 300), color.NRGBA{R: 0x20, G: 0x20, B: 0x20, A: 200})
+			// overlay the semi transparent rectangle
+			ColorBox(gtx, image.Pt(imDims.Size.X, int(float64(imDims.Size.X)*0.1)), color.NRGBA{R: 0x20, G: 0x20, B: 0x20, A: 200})
 			return layout.Dimensions{Size: imDims.Size}
 
 			// radius := unit.Dp(4) // Set the radius for the rounded corners. Adjust this value as needed.
