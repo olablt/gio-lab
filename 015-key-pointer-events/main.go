@@ -20,9 +20,10 @@ type Area struct {
 	PointerPress bool
 	KeyPress     bool
 	// subscribe to key events
-	Keys      []key.Name
-	areaStack clip.Stack
-	Focus     bool
+	Keys                   []key.Name
+	areaStack              clip.Stack
+	CaptureKeysWhenInFocus bool // should this area be focused for key events when mouse is not over it?
+	StatusFocused          bool
 }
 
 func (a *Area) ProcessEvents(gtx layout.Context) {
@@ -57,14 +58,16 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 				// log
 				log.Printf("[%v] got Pointer.Press", a.Name)
 			case pointer.Enter:
-				if a.Focus {
+				if a.CaptureKeysWhenInFocus {
 					gtx.Execute(key.FocusCmd{Tag: tag})
 				}
+				a.StatusFocused = true
 				// log
 				log.Printf("[%v] got Pointer.Enter", a.Name)
 			case pointer.Leave:
 				// log
 				log.Printf("[%v] got Pointer.Leave", a.Name)
+				a.StatusFocused = false
 			}
 		}
 	}
@@ -72,12 +75,12 @@ func (a *Area) ProcessEvents(gtx layout.Context) {
 	event.Op(gtx.Ops, tag)
 	// New key event reading
 	filters := []event.Filter{}
-	if a.Focus {
+	if a.CaptureKeysWhenInFocus {
 		filters = append(filters, key.FocusFilter{Target: tag})
 	}
 	// set key filters
 	for _, k := range a.Keys {
-		if a.Focus {
+		if a.CaptureKeysWhenInFocus {
 			filters = append(filters, key.Filter{Focus: tag, Name: k})
 		} else {
 			filters = append(filters, key.Filter{Focus: nil, Name: k})
@@ -128,10 +131,10 @@ func main() {
 }
 
 // define event areas
-var windowArea = &Area{Name: "Window", Keys: []key.Name{key.NameEscape, "Q"}, Focus: false}
-var chartArea = &Area{Name: "Chart", Keys: []key.Name{key.NameEscape}, Focus: true}
-var xArea = &Area{Name: "X", Keys: []key.Name{"1", "2"}, Focus: true}
-var yArea = &Area{Name: "Y", Keys: []key.Name{"1", "2"}, Focus: true}
+var windowArea = &Area{Name: "Window", Keys: []key.Name{key.NameEscape, "Q"}, CaptureKeysWhenInFocus: false}
+var chartArea = &Area{Name: "Chart", Keys: []key.Name{key.NameEscape}, CaptureKeysWhenInFocus: true}
+var xArea = &Area{Name: "X", Keys: []key.Name{"1", "2"}, CaptureKeysWhenInFocus: true}
+var yArea = &Area{Name: "Y", Keys: []key.Name{"1", "2"}, CaptureKeysWhenInFocus: true}
 
 func ChartLayout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	// whole window events
@@ -147,13 +150,13 @@ func ChartLayout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				layout.Flexed(0.5, func(gtx layout.Context) layout.Dimensions {
 					chartArea.ProcessEvents(gtx)
 					chartArea.Pop()
-					return ui.FillWithLabelH3(gtx, th, "Chart", green)
+					return ui.FillWithLabelH3(gtx, th, "Chart", darkenColor(green, chartArea.StatusFocused))
 				}),
 				// X Axis AREA
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					xArea.ProcessEvents(gtx)
 					xArea.Pop()
-					return ui.FillWithLabelH3(gtx, th, "X", red)
+					return ui.FillWithLabelH3(gtx, th, "X", darkenColor(red, xArea.StatusFocused))
 				}),
 			)
 		}),
@@ -161,7 +164,7 @@ func ChartLayout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			yArea.ProcessEvents(gtx)
 			yArea.Pop()
-			return ui.FillWithLabelH3(gtx, th, " Y ", blue)
+			return ui.FillWithLabelH3(gtx, th, " Y ", darkenColor(blue, yArea.StatusFocused))
 		}),
 	)
 }
@@ -177,3 +180,17 @@ var (
 	green      = color.NRGBA{R: 0x40, G: 0xC0, B: 0x40, A: alpha}
 	blue       = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: alpha}
 )
+
+// darkenColor reduces the brightness of a color if focused
+func darkenColor(c color.NRGBA, focused bool) color.NRGBA {
+	if !focused {
+		return c
+	}
+	// Reduce each color component by ~25% for focused state
+	return color.NRGBA{
+		R: uint8(float64(c.R) * 0.75),
+		G: uint8(float64(c.G) * 0.75),
+		B: uint8(float64(c.B) * 0.75),
+		A: c.A,
+	}
+}
