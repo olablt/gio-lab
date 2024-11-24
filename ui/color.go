@@ -26,6 +26,9 @@ var (
 
 // COLOR CONVERSIONS
 
+// Color converts a hex color value (like 0xe6edf3) to an NRGBA color.
+// The alpha channel is set to fully opaque (255).
+// Use this for defining solid colors from hex values.
 func Color(hex int) color.NRGBA {
 	return color.NRGBA{
 		R: uint8(hex >> 16),
@@ -35,11 +38,17 @@ func Color(hex int) color.NRGBA {
 	}
 }
 
+// Alpha creates a new color with the specified alpha value while preserving
+// the original RGB values. Use this to make a color partially transparent.
+// alpha ranges from 0 (fully transparent) to 255 (fully opaque).
 func Alpha(c color.NRGBA, alpha uint8) color.NRGBA {
 	c.A = alpha
 	return c
 }
 
+// MixColor blends two colors together based on a percentage.
+// percent specifies how much of c1 to use (0-100).
+// Example: MixColor(red, blue, 60) gives a color that is 60% red and 40% blue.
 func MixColor(c1, c2 color.NRGBA, percent int) color.NRGBA {
 	p1 := float32(percent) / float32(100.0)
 	p2 := 1 - p1
@@ -51,10 +60,16 @@ func MixColor(c1, c2 color.NRGBA, percent int) color.NRGBA {
 	}
 }
 
+// RGB converts a 24-bit RGB color value to NRGBA.
+// The alpha channel is set to fully opaque (255).
+// Example: RGB(0xFF0000) creates a pure red color.
 func RGB(c uint32) color.NRGBA {
 	return ARGB(0xff000000 | c)
 }
 
+// ARGB converts a 32-bit ARGB color value to NRGBA.
+// The alpha channel is taken from the most significant byte.
+// Example: ARGB(0x80FF0000) creates a 50% transparent red color.
 func ARGB(c uint32) color.NRGBA {
 	return color.NRGBA{A: uint8(c >> 24), R: uint8(c >> 16), G: uint8(c >> 8), B: uint8(c)}
 }
