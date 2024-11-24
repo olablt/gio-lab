@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"image/color"
@@ -10,6 +10,20 @@ import (
 	"gioui.org/widget"
 )
 
+var Bold = FontWeight(font.Bold)
+var AlignStart = TextAlignment(text.Start)
+var AlignMiddle = TextAlignment(text.Middle)
+var AlignEnd = TextAlignment(text.End)
+
+var OneLine = MaxLines(1)
+var IconSize = FontEnlarge(2)
+
+// Label - one line text
+func Label(s string) W { return OneLine(Text(s)) }
+
+// H1 - one line text header
+func H1(s string) W { h1 := FontEnlarge(2); return h1(OneLine(Text(s))) }
+
 func Text(s string) W {
 	return func(c C) D {
 		tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: Theme.MaxLines}
@@ -18,12 +32,9 @@ func Text(s string) W {
 	}
 }
 
-var OneLine = MaxLines(1)
-
-// Label - one line text
-func Label(s string) W { return OneLine(Text(s)) }
-
-var Bold = FontWeight(font.Bold)
+func FontEnlarge(s float32) Wrapper {
+	return FontSize(SP(s) * Theme.FontSize)
+}
 
 func FontSize(s SP) Wrapper {
 	return func(w W) W {
@@ -37,8 +48,16 @@ func FontSize(s SP) Wrapper {
 	}
 }
 
-func FontEnlarge(s float32) Wrapper {
-	return FontSize(SP(s) * Theme.FontSize)
+func MaxLines(i int) Wrapper {
+	return func(w W) W {
+		return func(c C) D {
+			old := Theme.MaxLines
+			Theme.MaxLines = i
+			d := w(c)
+			Theme.MaxLines = old
+			return d
+		}
+	}
 }
 
 func Font(f *text.Shaper) Wrapper {
@@ -77,10 +96,6 @@ func TextAlignment(a text.Alignment) Wrapper {
 	}
 }
 
-var AlignStart = TextAlignment(text.Start)
-var AlignMiddle = TextAlignment(text.Middle)
-var AlignEnd = TextAlignment(text.End)
-
 func TextColor(col color.NRGBA) Wrapper {
 	return func(w W) W {
 		return func(c C) D {
@@ -88,18 +103,6 @@ func TextColor(col color.NRGBA) Wrapper {
 			Theme.TextColor = col
 			d := w(c)
 			Theme.TextColor = old
-			return d
-		}
-	}
-}
-
-func MaxLines(i int) Wrapper {
-	return func(w W) W {
-		return func(c C) D {
-			old := Theme.MaxLines
-			Theme.MaxLines = i
-			d := w(c)
-			Theme.MaxLines = old
 			return d
 		}
 	}

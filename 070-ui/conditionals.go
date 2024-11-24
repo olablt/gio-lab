@@ -1,9 +1,11 @@
 package main
 
-func WidgetIf(cond bool, w W) W {
+import "github.com/olablt/gio-lab/ui"
+
+func WidgetIf(cond bool, w ui.W) ui.W {
 	if cond {
 		return w
 	} else {
-		return EmptyWidget
+		return ui.EmptyWidget
 	}
 }

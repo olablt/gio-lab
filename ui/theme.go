@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"image/color"
@@ -18,9 +18,9 @@ type ThemeStyle struct {
 
 var Theme = ThemeStyle{
 	FontSize:      13,
-	FontFamily:    fontShaper,
+	FontFamily:    FontShaper,
 	FontWeight:    font.Normal,
 	TextAlignment: text.Start,
-	TextColor:     BLACK_500,
+	TextColor:     FgColor,
 	MaxLines:      0,
 }

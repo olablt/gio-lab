@@ -6,27 +6,50 @@ import (
 	"log"
 	"os"
 
+	// "gio.tools/icons"
+
+	// "golang.org/x/exp/shiny/materialdesign/icons"
+	"golang.org/x/exp/shiny/materialdesign/icons"
+
+	// "gio.tools/icons"
 	"gioui.org/app"
-	"gioui.org/f32"
+	gio "gioui.org/app"
 	"gioui.org/font/gofont"
-	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/unit"
-	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/olablt/gio-lab/ui"
 )
 
-type appState struct {
-	columnWidgets []widget.Clickable
+type App struct {
+	// columnWidgets []widget.Clickable
+	Clickables ui.Clickables
+	Editors    ui.Editors
 }
 
 func main() {
+	myApp := &App{
+		Clickables: ui.NewClickables(),
+		Editors:    ui.NewEditors(),
+	}
+	// myApp.Option
+	ui.TH.Palette = material.Palette{
+		Fg:         ui.FgColor,
+		Bg:         ui.BgColor,
+		ContrastBg: ui.BgColorAccent,
+		ContrastFg: ui.FgColor,
+	}
+
 	go func() {
-		w := new(app.Window)
-		if err := runApp(w); err != nil {
+		w := new(gio.Window)
+		w.Option(
+			// app.Title("oGio"),
+			app.Size(unit.Dp(1920)/1.5, unit.Dp(1080/2)),
+		)
+		if err := myApp.RunApp(w); err != nil {
 			log.Fatal(err)
 		}
 		os.Exit(0)
@@ -34,7 +57,7 @@ func main() {
 	app.Main()
 }
 
-func runApp(w *app.Window) error {
+func (a *App) RunApp(w *app.Window) error {
 	th := material.NewTheme()
 	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
 	// aState := appState{
@@ -51,258 +74,230 @@ func runApp(w *app.Window) error {
 			// Reset the operations
 			ops.Reset()
 
-			gtx := app.NewContext(&ops, e)
-			// xyGridLayout(gtx, th, &aState)
-			// myLayout(gtx)
+			ctx := app.NewContext(&ops, e)
 
-			Rows(
-				Rigid(
-					AlignMiddle(
-						FontSize(22)(
-							Label("Opapa"), // one line text
+			cl := clip.Rect{Max: ctx.Constraints.Max}.Push(ctx.Ops)
+			paint.Fill(ctx.Ops, ui.BgColor)
+			cl.Pop()
+
+			// APP Layout
+			ui.Rows(
+				// Header
+				ui.Rigid(a.AppHeader()),
+
+				// ui.Rigid(ui.Inset1(ui.HR(1))),
+				// ui.RowSpacer1,
+				ui.Rigid(ui.HR(1)),
+				ui.RowSpacer1,
+
+				// Body
+				ui.Flexed(1, a.AppBody(ctx)),
+
+				// // Footer
+				// ui.Rigid(ui.Label("Footer")),
+			)(ctx)
+
+			e.Frame(ctx.Ops)
+		}
+	}
+}
+
+func (a *App) AppHeader() ui.W {
+	return ui.Inset1(ui.H1("Gio UI Demo"))
+	// return ui.AlignMiddle(
+	// 	ui.H1("Gio UI Demo"),
+	// 	// ui.FontSize(22)(
+	// 	// 	ui.Label("Gio UI Demo"), // one line text
+	// 	// ),
+	// )
+}
+
+func (a *App) AppBody(gtx ui.C) ui.W {
+	_ = gtx
+	del := func() { log.Println("Delete") }
+	IconSettings := ui.IconSize(ui.Icon(icons.ActionSettings, ui.FgColorMuted))
+	IconDelete := ui.IconSize(ui.Icon(icons.ContentClear, ui.FgColorDanger))
+	IconDeveloperMode := ui.IconSize(ui.Icon(icons.DeviceDeveloperMode, ui.FgColorMuted))
+
+	// gtx.Constraints.Min = image.Point{X: 200, Y: 200}
+	// gtx.Constraints.Max = image.Point{X: 200, Y: 200}
+
+	return ui.Columns(
+		// Left Column - links
+		ui.ColSpacer1,
+		ui.Rigid(
+			// ui.Flexed(1,
+			// ColorBoxW(ui.P{500, 100}, ui.BgColor),
+
+			ui.ConstraintW(250,
+				ui.Rows(
+					// ui.Flexed(1,
+					ui.Rigid(
+						ui.ToolbarButton(a.Clickables.Get("GenSettingsButton"), IconSettings, "General Settings", del, gtx),
+						// ui.Wrap(
+						// 	ui.Text("Left Panel"),
+						// 	ui.AlignStart,
+						// 	ui.TextColor(ui.FgColor),
+						// 	ui.MaxLines(1),
+						// ),
+					),
+					// ui.RowSpacer1,
+					ui.Rigid(
+						ui.ToolbarButton(a.Clickables.Get("DevSettingsButton"), IconDeveloperMode, "Developer Settings", del, gtx),
+					),
+					// Removable Item
+					ui.Rigid(
+						ui.RoundedCorners(
+							// ui.Background(ui.BgColorMuted,
+							ui.Background(ui.BgColor,
+								ui.Inset1(
+									ui.Columns(
+										// ui.Rigid(ui.OnClick(a.Clickables.Get("GenSettings"), IconSettings, del, gtx)),
+										// ui.Rigid(IconSettings),
+										ui.RowSpacer1,
+										ui.Flexed(1, ui.Label("Removable Item")),
+										ui.Rigid(ui.OnClick(a.Clickables.Get("RemovableItemDelete"), IconDelete, del, gtx)),
+									),
+								),
+							),
 						),
 					),
-					// Text("Opapa"),
+					// end Removable Item
 				),
+			),
+		),
 
-				Flexed(1, myLayout(gtx)),
-			)(gtx)
+		ui.ColSpacer1,
 
-			e.Frame(gtx.Ops)
-		}
-	}
-}
+		// // Separator
+		// ui.Rigid(ui.Inset1(ui.VR(1))),
 
-type (
-	C       = layout.Context
-	D       = layout.Dimensions
-	W       = layout.Widget
-	P       = image.Point
-	DP      = unit.Dp
-	SP      = unit.Sp
-	Wrapper = func(W) W
-	List    = layout.List
-)
+		// Right Column - content
+		ui.Flexed(3,
 
-var (
-	Pt            = f32.Pt
-	SpaceUnit  DP = 8
-	BorderSize DP = 1
+			ui.Background(ui.BgColorBlack,
+				ui.Inset1(
+					ui.Rows(
 
-	fonts = gofont.Collection()
-	// fontShaper = text.NewShaper(fonts)
-	fontShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	// th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	// th         = material.NewTheme(fonts)
-)
+						// row header
+						ui.Rigid(
+							ui.Inset1(
+								ui.Wrap(
+									ui.H1("Right Panel - Content"),
+									ui.AlignStart,
+								),
+							),
+						),
 
-func myLayout(gtx C) W {
+						ui.Rigid(ui.Columns(
+							// row text input
+							ui.Rigid(
+								// TODO: add a constraint to the text input, this is not working
+								ui.ConstraintW(150,
+									ui.TextInput(a.Editors.Get("Text input"), "Text Input"),
+								),
+							),
+							// col spacer
+							ui.ColSpacer1,
+							// col button
+							ui.Rigid(
+								ui.ConstraintW(150,
+									ui.ToolbarButton(a.Clickables.Get("Default Button"), IconSettings, "Default Button", del, gtx),
+								),
+							),
+							// col spacer
+							ui.ColSpacer1,
+							// col button
+							ui.Rigid(
+								ui.ConstraintW(150,
+									ui.ToolbarButton(a.Clickables.Get("Invisible Button"), IconSettings, "Invisible Button", del, gtx),
+								),
+							),
+							// col spacer
+							ui.ColSpacer1,
+							// col button
+							ui.Rigid(
+								ui.ConstraintW(150,
+									ui.ToolbarButton(a.Clickables.Get("Primary Button"), IconSettings, "Primary Button", del, gtx),
+								),
+							),
+							// col spacer
+							ui.ColSpacer1,
+							// col button
+							ui.Rigid(
+								ui.ConstraintW(150,
+									ui.ToolbarButton(a.Clickables.Get("Danger Button"), IconSettings, "Danger Button", del, gtx),
+								),
+							),
+						)),
 
-	return Columns(
-		Rigid(ColorBoxW(P{100, 100}, red)),
-		Flexed(0.5, ColorBoxW(P{}, blue)),
-		Rigid(ColorBoxW(P{100, 100}, red)),
-		Rigid(WSpacer1),
-		// Flexed(0.5, ColorBoxW(P{}, green)),
-		Flexed(0.5, Rows(
-			Rigid(
-				RoundedCorners(
-					// Border(
-					BorderActive(
-						ColorBoxW(P{100, 100}, SILVER_300),
+						// spacer
+						ui.RowSpacer1,
+						// row text input
+						ui.Rigid(
+							ui.ConstraintW(150,
+								ui.TextInput(a.Editors.Get("Text input2"), "Text Input2"),
+							),
+						),
 					),
+
+					// ColorBoxW(ui.P{}, ui.BgColorTransparent),
 				),
 			),
-			// Rigid(HSpacer1),
-			Flexed(0.7, ColorBoxW(P{}, blue)),
-
-			Rigid(
-				Panel("Panel",
-					ColorBoxW(P{100, 100}, red),
-				),
-			),
-
-			Flexed(0.3,
-				// Panel("Panel",
-				ColorBoxW(P{}, green),
-				// ),
-			),
-
-			// Flexed(0.3,
-			// 		ColorBoxW(P{400, 200}, green),
-			// ),
-		)),
+		),
 	)
 
-	// return layout.Flex{}.Layout(gtx,
-	// 	layout.Rigid(func(gtx C) D {
-	// 		return ColorBox(gtx, image.Pt(100, 100), red)
-	// 	}),
-	// 	layout.Flexed(0.5, func(gtx C) D {
-	// 		return ColorBox(gtx, gtx.Constraints.Min, blue)
-	// 	}),
-	// 	layout.Rigid(func(gtx C) D {
-	// 		return ColorBox(gtx, image.Pt(100, 100), red)
-	// 	}),
-	// 	layout.Flexed(0.5, func(gtx C) D {
-	// 		return ColorBox(gtx, gtx.Constraints.Min, green)
-	// 	}),
+	// return ui.Columns(
+	// 	ui.Rigid(ColorBoxW(ui.P{100, 100}, ui.BgColorAccent)),
+	// 	ui.Flexed(0.5, ColorBoxW(ui.P{}, ui.BgColorDanger)),
+	// 	ui.Rigid(ColorBoxW(ui.P{100, 100}, ui.BgColorSevere)),
+	// 	ui.Rigid(ui.WSpacer1),
+	// 	// Flexed(0.5, ColorBoxW(P{}, green)),
+	// 	ui.Flexed(0.5, ui.Rows(
+	// 		ui.Rigid(
+	// 			ui.RoundedCorners(
+	// 				// Border(
+	// 				ui.BorderActive(
+	// 					ColorBoxW(ui.P{100, 100}, ui.FgColor),
+	// 				),
+	// 			),
+	// 		),
+	// 		// ui.Rigid(HSpacer1),
+	// 		ui.Flexed(0.7, ColorBoxW(ui.P{}, getColor(1))),
+
+	// 		ui.Rigid(
+	// 			ui.Panel("Panel",
+	// 				ColorBoxW(ui.P{100, 100}, getColor(2)),
+	// 			),
+	// 		),
+
+	// 		ui.Flexed(0.3,
+	// 			ColorBoxW(ui.P{}, getColor(3)),
+	// 		),
+	// 	)),
 	// )
 
-	// // Draw rectangles inside of each other, with 30dp padding.
-	// return layout.UniformInset(unit.Dp(30)).Layout(gtx, func(gtx C) D {
-	// 	return ColorBox(gtx, gtx.Constraints.Max, getColor(1))
-	// })
 }
-
-func Rows(children ...layout.FlexChild) W {
-	return func(c C) D {
-		return layout.Flex{Axis: layout.Vertical}.Layout(c, children...)
-	}
-}
-
-func Columns(children ...layout.FlexChild) W {
-	return func(c C) D {
-		return layout.Flex{Axis: layout.Horizontal}.Layout(c, children...)
-	}
-}
-
-var (
-	Flexed = layout.Flexed
-	Rigid  = layout.Rigid
-)
-
-func EmptyWidget(c C) D { return D{} }
-
-func Wrap(w W, wrappers ...Wrapper) W {
-	for i := len(wrappers) - 1; i >= 0; i-- {
-		w = wrappers[i](w)
-	}
-
-	return w
-}
-
-func LayoutToWidget(r func(C, W) D, w W) W {
-	return func(c C) D {
-		return r(c, w)
-	}
-}
-
-func LayoutToWrapper(r func(C, W) D) func(w W) W {
-	return func(w W) W {
-		return func(c C) D {
-			return r(c, w)
-		}
-	}
-}
-
-// determineLayoutConfig returns configurations for rows based on the window width
-func getContextWidth(gtx C) int {
-	width := gtx.Constraints.Max.X
-	switch {
-	case width < 600:
-		return 1 // Small screen: 1 column layout
-	case width < 1200:
-		return 2 // Medium screen: 2 column layout
-	default:
-		return 3 // Large screen: 3 column layout
-	}
-}
-
-// Test colors.
-var (
-	background = color.NRGBA{R: 0xC0, G: 0xC0, B: 0xC0, A: 0xFF}
-	red        = color.NRGBA{R: 0xC0, G: 0x40, B: 0x40, A: 0xFF}
-	green      = color.NRGBA{R: 0x40, G: 0xC0, B: 0x40, A: 0xFF}
-	blue       = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: 0xFF}
-)
 
 func getColor(i int) color.NRGBA {
 	return color.NRGBA{R: uint8(100 + i*20), G: uint8(150 + i*15), B: uint8(200 - i*10), A: 255}
 }
 
 // ColorBox creates a widget with the specified dimensions and color.
-func ColorBoxW(size image.Point, color color.NRGBA) W {
-	return func(c C) D {
+func ColorBoxW(size image.Point, color color.NRGBA) ui.W {
+	return func(c ui.C) ui.D {
 		if size.X == 0 {
 			size = c.Constraints.Min
 		}
 		defer clip.Rect{Max: size}.Push(c.Ops).Pop()
 		paint.ColorOp{Color: color}.Add(c.Ops)
 		paint.PaintOp{}.Add(c.Ops)
-		return D{Size: size}
+		return ui.D{Size: size}
 	}
 }
-func ColorBox(c C, size image.Point, color color.NRGBA) D {
+func ColorBox(c ui.C, size image.Point, color color.NRGBA) ui.D {
 	defer clip.Rect{Max: size}.Push(c.Ops).Pop()
 	paint.ColorOp{Color: color}.Add(c.Ops)
 	paint.PaintOp{}.Add(c.Ops)
-	return D{Size: size}
-}
-
-// xyGridLayout implements a layout based on the XY Grid system similar to Foundation ZURB
-func xyGridLayout(gtx C, th *material.Theme, aState *appState) D {
-	width := gtx.Constraints.Max.X
-	layoutConfig := determineLayoutConfig(width)
-
-	return layout.Flex{
-		Axis: layout.Vertical,
-	}.Layout(gtx,
-		layout.Rigid(func(gtx C) D {
-			l := material.H3(th, "XY Grid Layout Example")
-			l.Color = color.NRGBA{R: 127, G: 0, B: 0, A: 255}
-			l.Alignment = text.Middle
-			return l.Layout(gtx)
-		}),
-		layout.Flexed(1, func(gtx C) D {
-			rows := make([]layout.FlexChild, len(layoutConfig))
-			for i, columns := range layoutConfig {
-				columns := columns // capture loop variable
-				rows[i] = layout.Rigid(func(gtx C) D {
-					return layout.Flex{
-						Axis: layout.Horizontal,
-					}.Layout(gtx, createRow(gtx, th, aState, columns)...)
-				})
-			}
-			return layout.Flex{
-				Axis: layout.Vertical,
-			}.Layout(gtx, rows...)
-		}),
-	)
-}
-
-// determineLayoutConfig returns configurations for rows based on the window width
-func determineLayoutConfig(width int) [][]int {
-	switch {
-	case width < 600:
-		return [][]int{
-			{12}, {6, 6}, {12}, {6, 6}, {12},
-		} // Small screen: 1 column layout
-	case width < 1200:
-		return [][]int{
-			{4, 8}, {6, 6}, {12}, {4, 8}, {8, 4},
-		} // Medium screen: 2 column layout
-	default:
-		return [][]int{
-			{3, 9}, {4, 4, 4}, {6, 6}, {3, 6, 3}, {8, 4},
-		} // Large screen: 3 column layout
-	}
-}
-
-// createRow creates a Flex row with the specified column widths
-func createRow(gtx C, th *material.Theme, aState *appState, columns []int) []layout.FlexChild {
-	children := make([]layout.FlexChild, len(columns))
-
-	totalWidth := gtx.Constraints.Max.X
-	for i, col := range columns {
-		colWidth := totalWidth * col / 12 // Determine column width as a fraction of the total width
-		children[i] = layout.Rigid(func(gtx C) D {
-			gtx.Constraints.Min.X = colWidth
-			gtx.Constraints.Max.X = colWidth
-			btn := material.Button(th, &aState.columnWidgets[i%len(aState.columnWidgets)], "Column "+string(rune('A'+i)))
-			btn.Background = color.NRGBA{R: uint8(100 + i*20), G: uint8(150 + i*15), B: uint8(200 - i*10), A: 255}
-			return btn.Layout(gtx)
-		})
-	}
-	return children
+	return ui.D{Size: size}
 }

@@ -16,18 +16,15 @@ import (
 	"gioui.org/widget/material"
 )
 
-type C = layout.Context
-type D = layout.Dimensions
-
 func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th := material.NewTheme()
 	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
 	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
 	// set Github theme
-	th.Palette.Fg = ColorFg
-	th.Palette.Bg = ColorBg
-	th.Palette.ContrastFg = ColorFg
-	th.Palette.ContrastBg = ColorBgAccent
+	th.Palette.Fg = FgColor
+	th.Palette.Bg = BgColor
+	th.Palette.ContrastFg = FgColor
+	th.Palette.ContrastBg = BgColorAccent
 
 	go func() {
 		w := &app.Window{}
