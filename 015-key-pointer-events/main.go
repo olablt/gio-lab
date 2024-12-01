@@ -35,7 +35,7 @@ type Area struct {
 	StatusFocused          bool
 }
 
-func (a *Area) ProcessEvents(gtx layout.Context) {
+func (a *Area) Update(gtx layout.Context) {
 	// Declare the tag.
 	tag := a
 
@@ -145,20 +145,33 @@ func (a *Area) Pop() {
 
 func main() {
 	clickable := widget.Clickable{}
+	editor := &widget.Editor{
+		SingleLine: true,
+		Submit:     true,
+	}
+
 	modalVisible := false
 
 	Loop(func(win *app.Window, gtx layout.Context, th *material.Theme) {
+		ed := material.Editor(th, editor, "hint")
+		ed.TextSize = unit.Sp(30)
+		ed.HintColor = black
 
 		// process events from previous frame
-		modalArea.ProcessEvents(gtx)
-		chartArea.ProcessEvents(gtx)
-		barsArea.ProcessEvents(gtx)
-		xArea.ProcessEvents(gtx)
-		yArea.ProcessEvents(gtx)
+		modalArea.Update(gtx)
+		chartArea.Update(gtx)
+		barsArea.Update(gtx)
+		xArea.Update(gtx)
+		yArea.Update(gtx)
 		if chartArea.Key == "P" {
-			modalVisible = true
+			if !modalVisible {
+				modalVisible = true
+				// gtx.Execute(key.FocusCmd{Tag: modalArea})
+				editor.SetText("")
+				gtx.Execute(key.FocusCmd{Tag: editor})
+			}
 		}
-		if modalArea.Key == key.NameEscape || clickable.Clicked(gtx) {
+		if (chartArea.Key == key.NameEscape || modalArea.Key == key.NameEscape || clickable.Clicked(gtx)) && modalVisible {
 			log.Println("GOT ESC MODAL")
 			modalVisible = false
 		}
@@ -180,14 +193,13 @@ func main() {
 
 		// MODAL
 		if modalVisible {
-			gtx.Execute(key.FocusCmd{Tag: modalArea})
 
 			layout.Background{}.Layout(gtx,
 				func(gtx layout.Context) layout.Dimensions {
 					// white transparent background
 					return clickable.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 						// log.Printf("%+v", gtx.Constraints)
-						dims := ui.ColorBox(gtx, gtx.Constraints.Max, ui.Alpha(white, 150))
+						dims := ui.ColorBox(gtx, gtx.Constraints.Min, ui.Alpha(white, 150))
 						return dims
 					})
 				},
@@ -199,6 +211,7 @@ func main() {
 					modalArea.Layout(gtx)
 					defer modalArea.Pop()
 					dims := ui.FillWithLabelH3(gtx, th, " Modal ", darkenColor(blue, modalArea.StatusFocused))
+					ed.Layout(gtx)
 					return dims
 				})
 
@@ -260,6 +273,7 @@ var (
 	alpha      = uint8(255)
 	red        = color.NRGBA{R: 0xC0, G: 0x40, B: 0x40, A: alpha}
 	white      = color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: alpha}
+	black      = color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: alpha}
 	green      = color.NRGBA{R: 0x40, G: 0xC0, B: 0x40, A: alpha}
 	blue       = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: alpha}
 )
