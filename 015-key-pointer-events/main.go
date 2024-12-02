@@ -157,12 +157,15 @@ func main() {
 		ed.TextSize = unit.Sp(30)
 		ed.HintColor = black
 
-		// process events from previous frame
+		if !modalVisible {
+			chartArea.Update(gtx)
+			barsArea.Update(gtx)
+			xArea.Update(gtx)
+			yArea.Update(gtx)
+		}
+		// if update is placed before other areas, it will catch the key events even if not visible
 		modalArea.Update(gtx)
-		chartArea.Update(gtx)
-		barsArea.Update(gtx)
-		xArea.Update(gtx)
-		yArea.Update(gtx)
+
 		if chartArea.Key == "P" {
 			if !modalVisible {
 				modalVisible = true
@@ -171,8 +174,11 @@ func main() {
 				gtx.Execute(key.FocusCmd{Tag: editor})
 			}
 		}
-		if (chartArea.Key == key.NameEscape || modalArea.Key == key.NameEscape || clickable.Clicked(gtx)) && modalVisible {
+		clicked := clickable.Clicked(gtx)
+		// if (chartArea.Key == key.NameEscape || modalArea.Key == key.NameEscape || clicked) && modalVisible == true {
+		if (chartArea.Key == key.NameEscape || modalArea.Key == key.NameEscape || clicked) && modalVisible == true {
 			log.Println("GOT ESC MODAL")
+			log.Println(clicked)
 			modalVisible = false
 		}
 
@@ -193,13 +199,13 @@ func main() {
 
 		// MODAL
 		if modalVisible {
-
 			layout.Background{}.Layout(gtx,
 				func(gtx layout.Context) layout.Dimensions {
 					// white transparent background
 					return clickable.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 						// log.Printf("%+v", gtx.Constraints)
-						dims := ui.ColorBox(gtx, gtx.Constraints.Min, ui.Alpha(white, 150))
+						dims := ui.ColorBox(gtx, gtx.Constraints.Min, ui.Alpha(black, 250))
+						// dims := ui.ColorBox(gtx, gtx.Constraints.Min, ui.Alpha(white, 200))
 						return dims
 					})
 				},
@@ -214,7 +220,6 @@ func main() {
 					ed.Layout(gtx)
 					return dims
 				})
-
 		}
 
 	})
@@ -229,7 +234,7 @@ var chartArea = &Area{Name: "Chart", Keys: []key.Name{key.NameEscape, "Q", "P"},
 var barsArea = &Area{Name: "Bars", Keys: []key.Name{key.NameEscape}, CaptureKeysWhenInFocus: true}
 var xArea = &Area{Name: "X", Keys: []key.Name{"1", "2"}, CaptureKeysWhenInFocus: true}
 var yArea = &Area{Name: "Y", Keys: []key.Name{"1", "2"}, CaptureKeysWhenInFocus: true}
-var modalArea = &Area{Name: "Modal", Keys: []key.Name{key.NameEscape, "Q", "1", "2"}, CaptureKeysWhenInFocus: true}
+var modalArea = &Area{Name: "Modal", Keys: []key.Name{key.NameEscape, "Q", "1", "2"}, CaptureKeysWhenInFocus: false}
 
 func ChartLayout(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	// whole window events

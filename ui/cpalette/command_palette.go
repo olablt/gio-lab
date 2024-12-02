@@ -34,6 +34,9 @@ type CommandPalette struct {
 	// commands to clickable widgets
 	clickables map[string]*widget.Clickable
 	Visible    bool
+	//
+	KeyPress bool
+	Key      key.Name
 }
 
 type Command struct {
@@ -130,6 +133,7 @@ func (cp *CommandPalette) submit(command string) {
 	if cp.OnSubmit != nil {
 		cp.OnSubmit()
 	}
+	cp.Reset()
 }
 
 // handle shortcut keys
@@ -182,10 +186,17 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 	}
 }
 
+// Reset will reset the command palette - clear the search input and reset the list
+func (cp *CommandPalette) Reset() {
+	cp.SearchInput.SetText("")
+	cp.StringListFiltered = cp.StringList
+	cp.Visible = false
+}
+
 // ProcessKeyEvents will process key events
 func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
-	tag := &cp.SearchInput
-	event.Op(gtx.Ops, tag)
+	// tag := &cp.SearchInput
+	// event.Op(gtx.Ops, tag)
 
 	// handle key events
 	filters := []event.Filter{
@@ -202,6 +213,8 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 		// key.Filter{Focus: tag, Name: "K", Required: key.ModCtrl},
 	}
 	// check for new key events
+	cp.KeyPress = false
+	cp.Key = ""
 	for {
 		event, ok := gtx.Event(filters...)
 		if !ok {
@@ -214,6 +227,9 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 		// handle ev
 		if ev.State == key.Press {
 			log.Printf("[CP] got key.%v", ev.Name)
+			cp.KeyPress = true
+			cp.Key = ev.Name
+
 			// handle enter
 			if ev.Name == key.NameReturn {
 				// cp.submit(cp.cursor)
@@ -222,6 +238,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 			// handle escape
 			if ev.Name == key.NameEscape {
 				log.Println("[CP] escape pressed")
+				cp.Reset()
 				if cp.OnCancel != nil {
 					cp.OnCancel()
 				}
@@ -265,6 +282,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 }
 
 func (cp *CommandPalette) Update(gtx layout.Context) {
+	cp.HandleShortcutKeys(gtx)
 	// process pointer events
 	cp.ProcessPointerEvents(gtx)
 
@@ -273,10 +291,7 @@ func (cp *CommandPalette) Update(gtx layout.Context) {
 }
 
 func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
-	gtx.Execute(key.FocusCmd{Tag: cp.SearchInput})
 	// process events
-	cp.HandleShortcutKeys(gtx)
-	cp.Update(gtx)
 
 	// defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
 	// paint.Fill(gtx.Ops, th.Palette.Bg)
