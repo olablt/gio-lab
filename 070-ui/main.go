@@ -133,7 +133,7 @@ func (a *App) AppBody(gtx ui.C) ui.W {
 				ui.Rows(
 					// ui.Flexed(1,
 					ui.Rigid(
-						ui.ToolbarButton(a.Clickables.Get("GenSettingsButton"), IconSettings, "General Settings", del, gtx),
+						ui.InvisibleButton(a.Clickables.Get("GenSettingsButton"), IconSettings, "General Settings", del, gtx),
 						// ui.Wrap(
 						// 	ui.Text("Left Panel"),
 						// 	ui.AlignStart,
@@ -143,7 +143,7 @@ func (a *App) AppBody(gtx ui.C) ui.W {
 					),
 					// ui.RowSpacer1,
 					ui.Rigid(
-						ui.ToolbarButton(a.Clickables.Get("DevSettingsButton"), IconDeveloperMode, "Developer Settings", del, gtx),
+						ui.InvisibleButton(a.Clickables.Get("DevSettingsButton"), IconDeveloperMode, "Developer Settings", del, gtx),
 					),
 					// Removable Item
 					ui.Rigid(
@@ -202,7 +202,7 @@ func (a *App) AppBody(gtx ui.C) ui.W {
 							// col button
 							ui.Rigid(
 								ui.ConstraintW(150,
-									ui.ToolbarButton(a.Clickables.Get("Default Button"), IconSettings, "Default Button", del, gtx),
+									ui.DefaultButton(a.Clickables.Get("Default Button"), IconSettings, "Default Button", del, gtx),
 								),
 							),
 							// col spacer
@@ -210,7 +210,7 @@ func (a *App) AppBody(gtx ui.C) ui.W {
 							// col button
 							ui.Rigid(
 								ui.ConstraintW(150,
-									ui.ToolbarButton(a.Clickables.Get("Invisible Button"), IconSettings, "Invisible Button", del, gtx),
+									ui.InvisibleButton(a.Clickables.Get("Invisible Button"), IconSettings, "Invisible Button", del, gtx),
 								),
 							),
 							// col spacer
@@ -218,7 +218,7 @@ func (a *App) AppBody(gtx ui.C) ui.W {
 							// col button
 							ui.Rigid(
 								ui.ConstraintW(150,
-									ui.ToolbarButton(a.Clickables.Get("Primary Button"), IconSettings, "Primary Button", del, gtx),
+									ui.PrimaryButton(a.Clickables.Get("Primary Button"), IconSettings, "Primary Button", del, gtx),
 								),
 							),
 							// col spacer
@@ -226,7 +226,7 @@ func (a *App) AppBody(gtx ui.C) ui.W {
 							// col button
 							ui.Rigid(
 								ui.ConstraintW(150,
-									ui.ToolbarButton(a.Clickables.Get("Danger Button"), IconSettings, "Danger Button", del, gtx),
+									ui.DangerButton(a.Clickables.Get("Danger Button"), IconSettings, "Danger Button", del, gtx),
 								),
 							),
 						)),

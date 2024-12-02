@@ -40,7 +40,7 @@ var (
 	BgColorBlack          = Color(0x010409)
 	BgColorDisabled       = Color(0x212830)
 	BgColorTransparent    = Color(0x00000000)
-	BgColorNeutralMuted   = Color(0x656c7633)
+	BgColorNeutralMuted   = Alpha(Color(0x656c76), 0x33) // Color(0x656c7633)
 	BgColorNeutral        = Color(0x656c76)
 	BgColorAccentMuted    = Color(0x388bfd1a)
 	BgColorAccent         = Color(0x1f6feb)

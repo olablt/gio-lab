@@ -1,14 +1,11 @@
-package ui
+package cpalette
 
 import (
 	"image"
 
 	"gioui.org/f32"
-	"gioui.org/font/gofont"
 	"gioui.org/layout"
-	"gioui.org/text"
 	"gioui.org/unit"
-	"gioui.org/widget/material"
 )
 
 type (
@@ -33,10 +30,10 @@ var (
 	// BorderSize DP = 1
 	BorderSize DP = 0.5
 
-	fonts = gofont.Collection()
+	// fonts = gofont.Collection()
 	// fontShaper = text.NewShaper(fonts)
-	FontShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
-	TH         = material.NewTheme()
+	// FontShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+	// TH         = material.NewTheme()
 	// th.Palette = Palette{
 	// 	Fg:         rgb(0x000000),
 	// 	Bg:         rgb(0xffffff),

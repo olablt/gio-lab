@@ -27,6 +27,8 @@ func H1(s string) W { h1 := FontEnlarge(2); return h1(OneLine(Text(s))) }
 func Text(s string) W {
 	return func(c C) D {
 		tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: Theme.MaxLines}
+		// tl.LineHeight = 1
+		// tl.LineHeightScale = 1
 		paint.ColorOp{Color: Theme.TextColor}.Add(c.Ops)
 		return tl.Layout(c, Theme.FontFamily, font.Font{Weight: Theme.FontWeight}, Theme.FontSize, s, op.CallOp{})
 	}

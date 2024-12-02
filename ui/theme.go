@@ -12,8 +12,8 @@ type ThemeStyle struct {
 	FontFamily    *text.Shaper
 	FontWeight    font.Weight
 	TextAlignment text.Alignment
-	TextColor     color.NRGBA
 	MaxLines      int
+	TextColor     color.NRGBA
 }
 
 var Theme = ThemeStyle{

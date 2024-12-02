@@ -160,8 +160,12 @@ func Hovered(c color.NRGBA) (h color.NRGBA) {
 		// Provide a reasonable default for transparent widgets.
 		return color.NRGBA{A: 0x44, R: 0x88, G: 0x88, B: 0x88}
 	}
-	const ratio = 0x20
+	const ratio = 0x10
+	// const ratio = 0x20
 	m := color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: c.A}
+	// m := color(0x212830)
+	// m := color.NRGBA{R: 0x21, G: 0x28, B: 0x30, A: c.A}
+
 	if approxLuminance(c) > 128 {
 		m = color.NRGBA{A: c.A}
 	}

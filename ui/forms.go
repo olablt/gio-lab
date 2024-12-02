@@ -1,10 +1,13 @@
 package ui
 
 import (
+	"image/color"
+
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/olablt/gio-lab/ui/f32color"
 )
 
 type (
@@ -70,36 +73,79 @@ func TextInput(editor *widget.Editor, hint string) W {
 
 	e := material.Editor(TH, editor, hint)
 	e.TextSize = Theme.FontSize
+	// e.LineHeight = SP(1)
+	// tl.LineHeight = 1
+	// e.LineHeightScale = 0.5
+
 	e.HintColor = FgColorMuted
 
-	return Background(BgColor,
-		Wrap(
-			// material.Editor(TH, editor, hint).Layout,
-			e.Layout,
-			border,
-			RoundedCorners,
-			Inset1,
+	// w := func(c C) D {
+	return RoundedCorners(
+		Background(BgColorDisabled,
+			Wrap(
+				e.Layout,
+				border,
+				Inset1,
+				// Inset05,
+			),
 		),
 	)
 }
 
+func DefaultButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
+	// bg := BgColor
+	bg := BgColorDisabled
+	fg := FgColor
+	fgH := FgColor
+	// bgH := BgColorDisabled
+	bgH := f32color.Hovered(bg)
+	return IconButton(clickable, icon, title, onclick, ctx, fg, bg, fgH, bgH)
+}
+
+func InvisibleButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
+	bg := BgColor
+	fg := FgColor
+	fgH := FgColor
+	bgH := BgColorDisabled
+	// bgH := f32color.Hovered(bg)
+	return IconButton(clickable, icon, title, onclick, ctx, fg, bg, fgH, bgH)
+}
+
+func PrimaryButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
+	bg := BgColorSuccess
+	fg := FgColor
+	fgH := FgColor
+	// bgH := BgColorSuccess
+	bgH := f32color.Hovered(bg)
+	return IconButton(clickable, icon, title, onclick, ctx, fg, bg, fgH, bgH)
+}
+
+func DangerButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
+	bg := BgColorDisabled
+	fg := FgColor
+	fgH := FgColor
+	bgH := BgColorDanger
+	// return IconButton(clickable, EmptyWidget, title, onclick, ctx, fg, bg, fgH, bgH)
+	return IconButton(clickable, icon, title, onclick, ctx, fg, bg, fgH, bgH)
+}
+
 // returns a clickable button with an icon and a title
-func ToolbarButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
+func IconButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context, fg, bg, fgH, bgH color.NRGBA) W {
 	if clickable.Clicked(ctx) {
 		onclick()
 	}
-	// bg := BgColorMuted
-	bg := BgColor
+	// // bg := BgColorMuted
+	// bg := BgColor
 	hovered := clickable.Hovered()
 	if hovered {
-		// bg = BgColorEmphasis
-		bg = BgColorMuted
+		// // bg = BgColorEmphasis
+		// bg = BgColorMuted
+		fg = fgH
+		bg = bgH
 		// pointer.CursorGrab.Add(ctx.Ops) // set mouse cursor
 		pointer.CursorPointer.Add(ctx.Ops) // set mouse cursor
 	}
-
 	w := func(c C) D {
-
 		return clickable.Layout(c,
 			RoundedCorners(
 				// ui.Background(ui.BgColorMuted,
@@ -115,11 +161,6 @@ func ToolbarButton(clickable *Clickable, icon W, title string, onclick func(), c
 			),
 		)
 	}
-
-	// if hovered {
-	// 	btn = Tooltip(btn, desc)
-	// }
-
 	return w
 }
 

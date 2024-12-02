@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"gioui.org/app"
+	"gioui.org/font/gofont"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -18,8 +19,8 @@ import (
 
 func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 	th := material.NewTheme()
-	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
-	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
+	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
 	// set Github theme
 	th.Palette.Fg = FgColor
 	th.Palette.Bg = BgColor
@@ -30,7 +31,7 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 		w := &app.Window{}
 		w.Option(
 			app.Title("oGio"),
-			app.Size(unit.Dp(1920/4), unit.Dp(1080/2)),
+			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
 		)
 
 		// ops will be used to encode different operations.

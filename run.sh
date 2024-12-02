@@ -12,5 +12,6 @@ tmux send-keys -t gio-lab.0 "tmux clear-history" ENTER
 # tmux send-keys -t gio-lab.0 "go run ./040-modal/" ENTER
 # tmux send-keys -t gio-lab.0 "go run ./050-fps/" ENTER
 # tmux send-keys -t gio-lab.0 "go run ./060-drag-hello/" ENTER
-tmux send-keys -t gio-lab.0 "go run ./070-ui/" ENTER
+# tmux send-keys -t gio-lab.0 "go run ./070-ui/" ENTER
+tmux send-keys -t gio-lab.0 "go run ./test" ENTER
 # tmux send-keys -t gio-lab.0 "go run ./100-draw-bug/" ENTER
