@@ -1,5 +1,5 @@
 // adapted material.Button to ActionListItem
-package cpalette
+package ui
 
 import (
 	"image"
@@ -58,7 +58,8 @@ func ActionListItem(th *material.Theme, button *widget.Clickable, txt, rtxt stri
 		Color:        th.Palette.Fg,
 		CornerRadius: 4,
 		Background:   th.Palette.Bg,
-		TextSize:     th.TextSize * 14.0 / 16.0,
+		TextSize:     12,
+		// TextSize:     th.TextSize * 14.0 / 16.0,
 		Inset: layout.Inset{
 			Top: 5, Bottom: 5,
 			Left: 12, Right: 12,
@@ -90,26 +91,26 @@ func IconActionListItem(th *material.Theme, button *widget.Clickable, icon *widg
 	}
 }
 
-// Clickable lays out a rectangular clickable widget without further
-// decoration.
-func Clickable(gtx layout.Context, button *widget.Clickable, w layout.Widget) layout.Dimensions {
-	return button.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		semantic.Button.Add(gtx.Ops)
-		return layout.Background{}.Layout(gtx,
-			func(gtx layout.Context) layout.Dimensions {
-				defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
-				if button.Hovered() || gtx.Focused(button) {
-					paint.Fill(gtx.Ops, f32color.Hovered(color.NRGBA{}))
-				}
-				for _, c := range button.History() {
-					drawInk(gtx, c)
-				}
-				return layout.Dimensions{Size: gtx.Constraints.Min}
-			},
-			w,
-		)
-	})
-}
+// // Clickable lays out a rectangular clickable widget without further
+// // decoration.
+// func Clickable(gtx layout.Context, button *widget.Clickable, w layout.Widget) layout.Dimensions {
+// 	return button.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+// 		semantic.Button.Add(gtx.Ops)
+// 		return layout.Background{}.Layout(gtx,
+// 			func(gtx layout.Context) layout.Dimensions {
+// 				defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+// 				if button.Hovered() || gtx.Focused(button) {
+// 					paint.Fill(gtx.Ops, f32color.Hovered(color.NRGBA{}))
+// 				}
+// 				for _, c := range button.History() {
+// 					drawInk(gtx, c)
+// 				}
+// 				return layout.Dimensions{Size: gtx.Constraints.Min}
+// 			},
+// 			w,
+// 		)
+// 	})
+// }
 
 func (b ActionListItemStyle) Layout(gtx layout.Context) layout.Dimensions {
 	return ActionListItemLayoutStyle{

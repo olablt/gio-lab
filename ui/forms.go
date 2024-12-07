@@ -73,6 +73,7 @@ func TextInput(editor *widget.Editor, hint string) W {
 
 	e := material.Editor(TH, editor, hint)
 	e.TextSize = Theme.FontSize
+	e.Color = FgColor
 	// e.LineHeight = SP(1)
 	// tl.LineHeight = 1
 	// e.LineHeightScale = 0.5

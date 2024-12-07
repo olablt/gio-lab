@@ -1,13 +1,18 @@
 package ui
 
 import (
+	"bytes"
 	"image"
-	"image/color"
+	"image/png"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
+	"gioui.org/gpu/headless"
+	"gioui.org/io/event"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -17,15 +22,13 @@ import (
 	"gioui.org/widget/material"
 )
 
-func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
+func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th *material.Theme), onDestory func()) {
 	th := material.NewTheme()
-	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(LoadFontCollection()))
 	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
-	// set Github theme
-	th.Palette.Fg = FgColor
-	th.Palette.Bg = BgColor
-	th.Palette.ContrastFg = FgColor
-	th.Palette.ContrastBg = BgColorAccent
+
+	// Create signal channel for Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		w := &app.Window{}
@@ -34,56 +37,103 @@ func Loop(fn func(win *app.Window, gtx layout.Context, th *material.Theme)) {
 			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
 		)
 
-		// ops will be used to encode different operations.
-		var ops op.Ops
+		// Make a channel to read window events from.
+		events := make(chan event.Event)
+		// Make a channel to signal the end of processing a window event.
+		acks := make(chan struct{})
 
-		// new event queue
-		for {
-			switch e := w.Event().(type) {
-			case app.FrameEvent:
-				// gtx is used to pass around rendering and event information.
-				gtx := app.NewContext(&ops, e)
-				// fill the entire window with the background color
-				defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
-				paint.Fill(gtx.Ops, th.Palette.Bg)
-				// render contents
-				fn(w, gtx, th)
-				// render frame
-				e.Frame(gtx.Ops)
-			case app.DestroyEvent:
-				if e.Err != nil {
-					log.Println("got error", e.Err)
-					os.Exit(1)
-				}
-				log.Println("exiting...")
+		// Create a done channel to signal shutdown
+		done := make(chan struct{})
+		go func() {
+			// Handle OS signals
+			select {
+			case <-sigChan:
+				log.Println("Received interrupt signal")
+				onDestory()
+				close(done)
 				os.Exit(0)
-			case app.ConfigEvent:
-				log.Printf("got config event Focused:%v", e.Config.Focused)
+			case <-done:
+				return
+			}
+		}()
+
+		go func() {
+			// Iterate window events
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					ev := w.Event()
+					events <- ev
+					<-acks
+					if _, ok := ev.(app.DestroyEvent); ok {
+						return
+					}
+				}
+			}
+		}()
+		// var ed widget.Editor
+		var ops op.Ops
+		for {
+			select {
+			case <-done:
+				return
+			case event := <-events:
+				switch event := event.(type) {
+				case app.DestroyEvent:
+					// We must manually ack a destroy event in order to ensure that the other goroutine
+					// shuts down when we return.
+					acks <- struct{}{}
+					onDestory()
+					close(events)
+					close(acks)
+					close(done)
+					return
+				case app.FrameEvent:
+					gtx := app.NewContext(&ops, event)
+					// fill the entire window with the background color
+					paint.FillShape(gtx.Ops, th.Palette.Bg,
+						clip.Rect{Max: gtx.Constraints.Min}.Op())
+					// defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+					// paint.Fill(gtx.Ops, th.Palette.Bg)
+					// render contents
+					fn(w, gtx, th)
+					// render frame
+					event.Frame(gtx.Ops)
+				}
+				// If we didn't get a destroy event, ack that we're finished processing the window event
+				// so that the other goroutine can continue.
+				acks <- struct{}{}
+			case <-refresh:
+				// case newText := <-someChannel:
+				// 	// ed.SetText(newTextefresh:
+				// ed.SetText(newText)
+				w.Invalidate()
 			}
 		}
 
 	}()
+
 	app.Main()
 }
 
-// ColorBox creates a widget with the specified dimensions and color.
-func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Dimensions {
-	defer clip.Rect{Max: size}.Push(gtx.Ops).Pop()
-	paint.ColorOp{Color: color}.Add(gtx.Ops)
-	paint.PaintOp{}.Add(gtx.Ops)
-	return layout.Dimensions{Size: size}
-}
-
-func FillWithLabel(gtx layout.Context, th material.Theme, text string, fg, bg color.NRGBA) layout.Dimensions {
-	th.Palette.Fg = fg
-	th.Palette.Bg = bg
-	ColorBox(gtx, gtx.Constraints.Min, bg)
-	// return layout.Center.Layout(gtx, material.Label(&th, unit.Sp(10), text).Layout)
-	return layout.Center.Layout(gtx, material.Body1(&th, text).Layout)
-}
-
-// FillWithLabelH3 creates a label with the specified text and background color
-func FillWithLabelH3(gtx layout.Context, th *material.Theme, text string, backgroundColor color.NRGBA) layout.Dimensions {
-	ColorBox(gtx, gtx.Constraints.Max, backgroundColor)
-	return layout.Center.Layout(gtx, material.H3(th, text).Layout)
+func Screenshot(gtx layout.Context, filename string) {
+	sz := image.Point{X: gtx.Constraints.Max.X, Y: gtx.Constraints.Max.Y}
+	w, err := headless.NewWindow(sz.X, sz.Y)
+	if err != nil {
+		log.Println("[Screenshot] ERROR getting headless")
+	}
+	w.Frame(gtx.Ops)
+	img := image.NewRGBA(image.Rectangle{Max: sz})
+	if err := w.Screenshot(img); err != nil {
+		log.Println("[Screenshot] ERROR getting screenshot")
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		log.Println("[Screenshot] ERROR encoding")
+	}
+	if err := os.WriteFile(filename, buf.Bytes(), 0o666); err != nil {
+		log.Println("[Screenshot] ERROR saving file", filename)
+	}
 }

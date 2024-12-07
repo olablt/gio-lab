@@ -1,4 +1,4 @@
-package cpalette
+package ui
 
 import (
 	"fmt"
@@ -8,8 +8,6 @@ import (
 	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/layout"
-	"gioui.org/op/clip"
-	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -92,12 +90,15 @@ func (cp *CommandPalette) SetCallback(command string, callback func()) {
 func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
 	// layout
 	margins := layout.UniformInset(unit.Dp(5))
+	// margins := layout.UniformInset(unit.Dp(0))
 	return margins.Layout(gtx,
-		func(gtx C) D {
-			// Wrap the editor in material design
-			ed := material.Editor(th, cp.SearchInput, "Search")
-			return ed.Layout(gtx)
-		},
+		TextInput(cp.SearchInput, "Text Input"),
+		// func(gtx C) D {
+		// 	// Wrap the editor in material design
+		// 	// ed := material.Editor(th, cp.SearchInput, "Search")
+		// 	ed := TextInput(cp.SearchInput, "Text Input")
+		// 	return ed.Layout(gtx)
+		// },
 	)
 }
 
@@ -306,22 +307,32 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 	// )
 	// return d
 
-	// apply background
-	return layout.Background{}.Layout(gtx,
-		func(gtx C) D {
-			defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
-			paint.Fill(gtx.Ops, th.Palette.Bg)
-			return D{Size: gtx.Constraints.Min}
-		}, func(gtx C) D {
-			// layout elements
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return cp.InputLayout(gtx, th)
-				}),
-				layout.Flexed(1, func(gtx layout.Context) D {
-					return cp.ListLayout(gtx, th)
-				}),
-			)
-		})
+	// layout elements
+	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+		layout.Rigid(func(gtx C) D {
+			return cp.InputLayout(gtx, th)
+		}),
+		layout.Flexed(1, func(gtx layout.Context) D {
+			return cp.ListLayout(gtx, th)
+		}),
+	)
+
+	// // apply background
+	// return layout.Background{}.Layout(gtx,
+	// 	func(gtx C) D {
+	// 		defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
+	// 		paint.Fill(gtx.Ops, th.Palette.Bg)
+	// 		return D{Size: gtx.Constraints.Min}
+	// 	}, func(gtx C) D {
+	// 		// layout elements
+	// 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+	// 			layout.Rigid(func(gtx C) D {
+	// 				return cp.InputLayout(gtx, th)
+	// 			}),
+	// 			layout.Flexed(1, func(gtx layout.Context) D {
+	// 				return cp.ListLayout(gtx, th)
+	// 			}),
+	// 		)
+	// 	})
 
 }
