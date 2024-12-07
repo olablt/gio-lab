@@ -2,12 +2,15 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"strings"
 
 	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/layout"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -33,8 +36,9 @@ type CommandPalette struct {
 	clickables map[string]*widget.Clickable
 	Visible    bool
 	//
-	KeyPress bool
-	Key      key.Name
+	KeyPress       bool
+	Key            key.Name
+	ClickableLayer *widget.Clickable
 }
 
 type Command struct {
@@ -55,6 +59,7 @@ func NewCommandPalette() *CommandPalette {
 		shortcutStrings:    make(map[string]string),
 		keys:               make(map[key.Filter]string),
 		clickables:         make(map[string]*widget.Clickable),
+		ClickableLayer:     &widget.Clickable{},
 	}
 	cp.StringList = []string{}
 	cp.StringListFiltered = []string{}
@@ -179,6 +184,9 @@ func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 
 // ProcessPointerEvents will process pointer events
 func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
+	if cp.ClickableLayer.Clicked(gtx) {
+		cp.Visible = false
+	}
 	// loop through filtered list and check for clicks
 	for _, command := range cp.StringListFiltered {
 		if cp.clickables[command].Clicked(gtx) {
@@ -294,10 +302,8 @@ func (cp *CommandPalette) Update(gtx layout.Context) {
 func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 	// process events
 
-	// defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
-	// paint.Fill(gtx.Ops, th.Palette.Bg)
 	// // layout elements
-	// d := layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+	// return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 	// 	layout.Rigid(func(gtx C) D {
 	// 		return cp.InputLayout(gtx, th)
 	// 	}),
@@ -305,34 +311,30 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 	// 		return cp.ListLayout(gtx, th)
 	// 	}),
 	// )
-	// return d
 
-	// layout elements
-	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(func(gtx C) D {
-			return cp.InputLayout(gtx, th)
-		}),
-		layout.Flexed(1, func(gtx layout.Context) D {
-			return cp.ListLayout(gtx, th)
-		}),
-	)
-
-	// // apply background
-	// return layout.Background{}.Layout(gtx,
-	// 	func(gtx C) D {
-	// 		defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
-	// 		paint.Fill(gtx.Ops, th.Palette.Bg)
-	// 		return D{Size: gtx.Constraints.Min}
-	// 	}, func(gtx C) D {
-	// 		// layout elements
-	// 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-	// 			layout.Rigid(func(gtx C) D {
-	// 				return cp.InputLayout(gtx, th)
-	// 			}),
-	// 			layout.Flexed(1, func(gtx layout.Context) D {
-	// 				return cp.ListLayout(gtx, th)
-	// 			}),
-	// 		)
-	// 	})
+	return layout.Background{}.Layout(gtx,
+		func(gtx layout.Context) layout.Dimensions {
+			// white transparent background
+			return cp.ClickableLayer.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				dims := ColorBox(gtx, gtx.Constraints.Min, Alpha(BgColor, 250))
+				return dims
+			})
+		},
+		func(gtx layout.Context) layout.Dimensions {
+			w := gtx.Dp(500)
+			h := gtx.Dp(300)
+			gtx.Constraints.Max = image.Pt(w, h)
+			gtx.Constraints.Min = image.Pt(w, h)
+			paint.FillShape(gtx.Ops, th.Palette.Bg,
+				clip.Rect{Max: gtx.Constraints.Min}.Op())
+			Columns(
+				// Flexed(4, chart.Layout),
+				Flexed(1, func(gtx layout.Context) layout.Dimensions {
+					// return cp.Layout(gtx, th)
+					return cp.ListLayout(gtx, th)
+				}),
+			)(gtx)
+			return layout.Dimensions{Size: image.Point{w, h}}
+		})
 
 }
