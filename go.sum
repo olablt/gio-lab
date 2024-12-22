@@ -3,8 +3,6 @@ eliasnaur.com/font v0.0.0-20230308162249-dd43949cb42d/go.mod h1:OYVuxibdk9OSLX8v
 gio.tools/icons v0.0.0-20240218001709-cb8ae3190b97 h1:F43BKwfxVSu1rLtNIfJV+Nz7IjFUpYDa4Z6zgG6Ru54=
 gio.tools/icons v0.0.0-20240218001709-cb8ae3190b97/go.mod h1:n4MQqvlYYmM4VgoEvLdfC8plj5KzNk1Hu4AqYc4yKOg=
 gioui.org/cpu v0.0.0-20210808092351-bfe733dd3334/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=
-gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 h1:AGDDxsJE1RpcXTAxPG2B4jrwVUJGFDjINIPi1jtO6pc=
-gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=
 gioui.org/shader v1.0.8 h1:6ks0o/A+b0ne7RzEqRZK5f4Gboz2CfG+mVliciy6+qA=
 gioui.org/shader v1.0.8/go.mod h1:mWdiME581d/kV7/iEhLmUgUK5iZ09XR5XpduXzbePVM=
 gioui.org/x v0.5.0 h1:NVKTn5AZuYhkAnF7MYcy1dIes36+U1N4gUTsgBhfr4A=
