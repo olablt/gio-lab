@@ -69,7 +69,7 @@ func NewCommandPalette() *CommandPalette {
 // this will add a new command to the list of commands
 // that the command palette will display
 // command string must be unique
-func (cp *CommandPalette) RegisterCommand(command string, callback func(), key key.Filter) {
+func (cp *CommandPalette) RegisterCommand(command string, key key.Filter, callback func()) {
 	cp.StringList = append(cp.StringList, command)
 	cp.StringListFiltered = cp.StringList
 	cp.callbacks[command] = callback
@@ -90,6 +90,29 @@ func (cp *CommandPalette) SetCallback(command string, callback func()) {
 		return
 	}
 	cp.callbacks[command] = callback
+}
+
+// Call calls the callback for a command
+func (cp *CommandPalette) Call(command string) {
+	// check if the command exists
+	if _, ok := cp.callbacks[command]; !ok {
+		log.Printf("[CP] command '%v' does not exist", command)
+		return
+	}
+	cp.callbacks[command]()
+}
+
+// submit is called when a command is selected from the list
+func (cp *CommandPalette) submit(command string) {
+	// log.Printf("[CP] SUBMIT '%v'", cp.StringListFiltered[cp.cursor])
+	log.Printf("[CP] SUBMIT '%v'", command)
+	// if the callback exists, call it
+	cp.Call(command)
+	// if OnSubmit is set, call it
+	if cp.OnSubmit != nil {
+		cp.OnSubmit()
+	}
+	cp.Reset()
 }
 
 func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
@@ -126,20 +149,6 @@ func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 			},
 		)
 	})
-}
-
-// func (cp *CommandPalette) submit(i int) {
-func (cp *CommandPalette) submit(command string) {
-	// log.Printf("[CP] SUBMIT '%v'", cp.StringListFiltered[cp.cursor])
-	log.Printf("[CP] SUBMIT '%v'", command)
-	// check if the callback exists and call it
-	if callback, ok := cp.callbacks[command]; ok && callback != nil {
-		callback()
-	}
-	if cp.OnSubmit != nil {
-		cp.OnSubmit()
-	}
-	cp.Reset()
 }
 
 // handle shortcut keys
@@ -185,7 +194,7 @@ func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 // ProcessPointerEvents will process pointer events
 func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 	if cp.ClickableLayer.Clicked(gtx) {
-		cp.Visible = false
+		cp.Reset()
 	}
 	// loop through filtered list and check for clicks
 	for _, command := range cp.StringListFiltered {
@@ -200,6 +209,7 @@ func (cp *CommandPalette) Reset() {
 	cp.SearchInput.SetText("")
 	cp.StringListFiltered = cp.StringList
 	cp.Visible = false
+	cp.cursor = 0
 }
 
 // ProcessKeyEvents will process key events
@@ -241,8 +251,8 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 
 			// handle enter
 			if ev.Name == key.NameReturn {
-				// cp.submit(cp.cursor)
 				cp.submit(cp.StringListFiltered[cp.cursor])
+				cp.Reset() // first submit and then reset
 			}
 			// handle escape
 			if ev.Name == key.NameEscape {
@@ -314,7 +324,7 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 
 	return layout.Background{}.Layout(gtx,
 		func(gtx layout.Context) layout.Dimensions {
-			// white transparent background
+			// semi transparent background
 			return cp.ClickableLayer.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 				dims := ColorBox(gtx, gtx.Constraints.Min, Alpha(BgColor, 250))
 				return dims
@@ -325,12 +335,14 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 			h := gtx.Dp(300)
 			gtx.Constraints.Max = image.Pt(w, h)
 			gtx.Constraints.Min = image.Pt(w, h)
-			paint.FillShape(gtx.Ops, th.Palette.Bg,
-				clip.Rect{Max: gtx.Constraints.Min}.Op())
-			Columns(
-				// Flexed(4, chart.Layout),
+			// fill the background
+			paint.FillShape(gtx.Ops, th.Palette.Bg, clip.Rect{Max: gtx.Constraints.Min}.Op())
+			Rows(
+				Rigid(func(gtx layout.Context) layout.Dimensions {
+					return cp.InputLayout(gtx, th)
+
+				}),
 				Flexed(1, func(gtx layout.Context) layout.Dimensions {
-					// return cp.Layout(gtx, th)
 					return cp.ListLayout(gtx, th)
 				}),
 			)(gtx)
