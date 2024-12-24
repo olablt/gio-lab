@@ -54,7 +54,7 @@ func NewCommandPalette() *CommandPalette {
 		List:               &widget.List{List: layout.List{Axis: layout.Vertical}},
 		StringList:         []string{},
 		StringListFiltered: []string{},
-		cursor:             0,
+		cursor:             -1,
 		callbacks:          make(map[string]func()),
 		shortcutStrings:    make(map[string]string),
 		keys:               make(map[key.Filter]string),
@@ -95,7 +95,7 @@ func (cp *CommandPalette) SetCallback(command string, callback func()) {
 // Call calls the callback for a command
 func (cp *CommandPalette) Call(command string) {
 	// check if the command exists
-	if _, ok := cp.callbacks[command]; !ok {
+	if call, ok := cp.callbacks[command]; !ok || call == nil {
 		log.Printf("[CP] command '%v' does not exist", command)
 		return
 	}
@@ -206,10 +206,19 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 
 // Reset will reset the command palette - clear the search input and reset the list
 func (cp *CommandPalette) Reset() {
+	cp.cursor = -1
 	cp.SearchInput.SetText("")
 	cp.StringListFiltered = cp.StringList
 	cp.Visible = false
-	cp.cursor = 0
+}
+
+func (cp *CommandPalette) Show(txt string) {
+	cp.cursor = -1
+	cp.SearchInput.SetText(txt)
+	cp.SearchInput.SetCaret(20, 20)
+	cp.UpdateStringList(false)
+	// cp.StringListFiltered = cp.StringList
+	cp.Visible = true
 }
 
 // ProcessKeyEvents will process key events
@@ -251,8 +260,10 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 
 			// handle enter
 			if ev.Name == key.NameReturn {
-				cp.submit(cp.StringListFiltered[cp.cursor])
-				cp.Reset() // first submit and then reset
+				if cp.cursor >= 0 {
+					cp.submit(cp.StringListFiltered[cp.cursor])
+					cp.Reset() // first submit and then reset
+				}
 			}
 			// handle escape
 			if ev.Name == key.NameEscape {
@@ -265,15 +276,15 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 			// cursor movement
 			if ev.Name == "↓" || ev.Name == "J" {
 				cp.cursor = cp.cursor + 1
+				if cp.cursor > len(cp.StringListFiltered)-1 {
+					cp.cursor = len(cp.StringListFiltered) - 1
+				}
 			}
 			if ev.Name == "↑" || ev.Name == "K" {
 				cp.cursor = cp.cursor - 1
-			}
-			if cp.cursor < 0 {
-				cp.cursor = 0
-			}
-			if cp.cursor > len(cp.StringListFiltered)-1 {
-				cp.cursor = len(cp.StringListFiltered) - 1
+				if cp.cursor < 0 {
+					cp.cursor = -1
+				}
 			}
 		}
 	}
@@ -293,10 +304,16 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 	}
 
 	if inputUpdated {
-		trimmedString := strings.TrimSpace(cp.SearchInput.Text())
-		cp.StringListFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.StringList)
-		cp.cursor = 0
+		cp.UpdateStringList(true)
 		// log.Println("input changed!", trimmedString)
+	}
+}
+
+func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
+	trimmedString := strings.TrimSpace(cp.SearchInput.Text())
+	cp.StringListFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.StringList)
+	if selectFirst {
+		cp.cursor = 0
 	}
 }
 
