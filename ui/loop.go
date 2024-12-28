@@ -10,7 +10,9 @@ import (
 	"syscall"
 
 	"gioui.org/app"
+	"gioui.org/font"
 	"gioui.org/font/gofont"
+	"gioui.org/font/opentype"
 	"gioui.org/gpu/headless"
 	"gioui.org/io/event"
 	"gioui.org/layout"
@@ -22,9 +24,52 @@ import (
 	"gioui.org/widget/material"
 )
 
+func GetShaper() *text.Shaper {
+	// load Awesome font
+	fontData, err := os.ReadFile("assets/Font Awesome 5 Pro-Light-300.otf")
+	if err != nil {
+		log.Println("[ERROR] Error loading font file:", err)
+		shaper := text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+		return shaper
+	}
+
+	// 1. opentype parse
+	// Parse the font
+	face, err := opentype.Parse(fontData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Create font collection
+	fontAwesome := []font.FontFace{
+		{
+			Font: font.Font{
+				Typeface: "FontAwesome",
+			},
+			Face: face,
+		},
+	}
+
+	// // 2.0
+	// fontAwesome, err := opentype.ParseCollection(fontData)
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to parse font: %v", err))
+	// }
+
+	// merge go font and awsome font
+	faces := []font.FontFace{}
+	faces = append(gofont.Collection(), fontAwesome...)
+	for i, face := range faces {
+		log.Printf("#%v face %+v", i, face)
+	}
+
+	shaper := text.NewShaper(text.NoSystemFonts(), text.WithCollection(faces))
+	return shaper
+}
+
 func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th *material.Theme), onDestory func()) {
 	th := material.NewTheme()
-	th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
+	th.Shaper = GetShaper()
 
 	// Create signal channel for Ctrl+C
 	sigChan := make(chan os.Signal, 1)

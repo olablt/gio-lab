@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"log"
-	"strings"
 
 	"gioui.org/io/event"
 	"gioui.org/io/key"
@@ -207,16 +206,17 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 // Reset will reset the command palette - clear the search input and reset the list
 func (cp *CommandPalette) Reset() {
 	cp.cursor = -1
+	log.Println("cp.cursor", cp.cursor)
 	cp.SearchInput.SetText("")
 	cp.StringListFiltered = cp.StringList
 	cp.Visible = false
 }
 
 func (cp *CommandPalette) Show(txt string) {
-	cp.cursor = -1
 	cp.SearchInput.SetText(txt)
 	cp.SearchInput.SetCaret(20, 20)
 	cp.UpdateStringList(false)
+	cp.cursor = -1
 	// cp.StringListFiltered = cp.StringList
 	cp.Visible = true
 }
@@ -299,6 +299,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 		// log.Println("got event", ev, reflect.TypeOf(ev))
 		_, ok = ev.(widget.ChangeEvent)
 		if ok {
+			log.Println("got widget.ChangeEvent")
 			inputUpdated = true
 		}
 	}
@@ -309,8 +310,12 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 	}
 }
 
+func (cp *CommandPalette) SetCursor(i int) {
+	cp.cursor = i
+}
 func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
-	trimmedString := strings.TrimSpace(cp.SearchInput.Text())
+	// trimmedString := strings.TrimSpace(cp.SearchInput.Text())
+	trimmedString := cp.SearchInput.Text()
 	cp.StringListFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.StringList)
 	if selectFirst {
 		cp.cursor = 0
