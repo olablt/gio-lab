@@ -58,9 +58,10 @@ func GetShaper() *text.Shaper {
 	// merge go font and awsome font
 	faces := []font.FontFace{}
 	faces = append(gofont.Collection(), fontAwesome...)
-	for i, face := range faces {
-		log.Printf("#%v face %+v", i, face)
-	}
+	// // debug print font faces
+	// for i, face := range faces {
+	// 	log.Printf("#%v face %+v", i, face)
+	// }
 
 	shaper := text.NewShaper(text.NoSystemFonts(), text.WithCollection(faces))
 	return shaper
