@@ -206,7 +206,7 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 // Reset will reset the command palette - clear the search input and reset the list
 func (cp *CommandPalette) Reset() {
 	cp.cursor = -1
-	log.Println("cp.cursor", cp.cursor)
+	// log.Println("cp.cursor", cp.cursor)
 	cp.SearchInput.SetText("")
 	cp.StringListFiltered = cp.StringList
 	cp.Visible = false
@@ -299,7 +299,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 		// log.Println("got event", ev, reflect.TypeOf(ev))
 		_, ok = ev.(widget.ChangeEvent)
 		if ok {
-			log.Println("got widget.ChangeEvent")
+			// log.Println("got widget.ChangeEvent")
 			inputUpdated = true
 		}
 	}
