@@ -78,7 +78,6 @@ func (cp *CommandPalette) RegisterCommand(command string, key key.Filter, callba
 		cp.keys[key] = command
 		cp.shortcutStrings[command] = fmt.Sprintf("%v %v", key.Required, key.Name)
 	}
-
 }
 
 // SetCallback will set the callback for a command

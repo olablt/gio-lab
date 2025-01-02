@@ -93,6 +93,52 @@ func TextInput(editor *widget.Editor, hint string) W {
 	)
 }
 
+type ButtonStyle struct {
+	Bg        color.NRGBA
+	Fg        color.NRGBA
+	BgH       color.NRGBA
+	FgH       color.NRGBA
+	Inset     DP
+	Alignment layout.Alignment // layout.Start, layout.Middle, layout.End
+}
+
+func StyledButton(clickable *Clickable, title string, onclick func(), ctx layout.Context, style ButtonStyle) W {
+	// log.Printf("styled button ctx %+v", ctx)
+	if onclick != nil && clickable.Clicked(ctx) {
+		onclick()
+	}
+	bg := style.Bg
+	fg := style.Fg
+	hovered := clickable.Hovered()
+	if hovered {
+		fg = style.FgH
+		bg = style.BgH
+		pointer.CursorPointer.Add(ctx.Ops) // set mouse cursor
+	}
+
+	// columns := func(alignment layout.Alignment, children ...layout.FlexChild) W {
+	// 	return func(c C) D {
+	// 		return layout.Flex{Axis: layout.Horizontal, Alignment: alignment}.Layout(c, children...)
+	// 	}
+	// }
+	_ = fg
+	_ = bg
+
+	// inset := LayoutToWrapper(layout.UniformInset(style.Inset).Layout)
+	w := func(c C) D {
+		return clickable.Layout(c,
+			// Background(bg,
+			// inset(
+			// columns(style.Alignment,
+			Label(title),
+			// ),
+			// ),
+			// ),
+		)
+	}
+	return w
+}
+
 func DefaultButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
 	// bg := BgColor
 	bg := BgColorDisabled
@@ -134,6 +180,10 @@ func DangerButton(clickable *Clickable, icon W, title string, onclick func(), ct
 func IconButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context, fg, bg, fgH, bgH color.NRGBA) W {
 	if clickable.Clicked(ctx) {
 		onclick()
+	}
+
+	if icon == nil {
+		icon = EmptyWidget
 	}
 	// // bg := BgColorMuted
 	// bg := BgColor

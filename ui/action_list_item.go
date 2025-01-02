@@ -120,16 +120,16 @@ func (b ActionListItemStyle) Layout(gtx layout.Context) layout.Dimensions {
 	}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		weight := font.Normal
 		return b.Inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-			return layout.Flex{WeightSum: 2}.Layout(gtx,
-				// command
+			return layout.Flex{}.Layout(gtx,
+				// command - use Flexed(1) to take remaining space
 				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
 					colMacro := op.Record(gtx.Ops)
 					paint.ColorOp{Color: b.Color}.Add(gtx.Ops)
 					b.Font.Weight = weight
-					return widget.Label{Alignment: text.Start}.Layout(gtx, b.shaper, b.Font, b.TextSize, b.Text, colMacro.Stop())
+					return widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, b.shaper, b.Font, b.TextSize, b.Text, colMacro.Stop())
 				}),
-				// shortcut
-				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+				// shortcut - keep as Rigid to use only needed space
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					colMacro := op.Record(gtx.Ops)
 					paint.ColorOp{Color: b.Color}.Add(gtx.Ops)
 					b.Font.Weight = weight
@@ -170,50 +170,50 @@ func (b ActionListItemLayoutStyle) Layout(gtx layout.Context, w layout.Widget) l
 	})
 }
 
-func (b IconActionListItemStyle) Layout(gtx layout.Context) layout.Dimensions {
-	m := op.Record(gtx.Ops)
-	dims := b.ActionListItem.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		semantic.Button.Add(gtx.Ops)
-		if d := b.Description; d != "" {
-			semantic.DescriptionOp(b.Description).Add(gtx.Ops)
-		}
-		return layout.Background{}.Layout(gtx,
-			func(gtx layout.Context) layout.Dimensions {
-				rr := (gtx.Constraints.Min.X + gtx.Constraints.Min.Y) / 4
-				defer clip.UniformRRect(image.Rectangle{Max: gtx.Constraints.Min}, rr).Push(gtx.Ops).Pop()
-				background := b.Background
-				switch {
-				case !gtx.Enabled():
-					background = f32color.Disabled(b.Background)
-				case b.ActionListItem.Hovered() || gtx.Focused(b.ActionListItem):
-					background = f32color.Hovered(b.Background)
-				}
-				paint.Fill(gtx.Ops, background)
-				for _, c := range b.ActionListItem.History() {
-					drawInk(gtx, c)
-				}
-				return layout.Dimensions{Size: gtx.Constraints.Min}
-			},
-			func(gtx layout.Context) layout.Dimensions {
-				return b.Inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					size := gtx.Dp(b.Size)
-					if b.Icon != nil {
-						gtx.Constraints.Min = image.Point{X: size}
-						b.Icon.Layout(gtx, b.Color)
-					}
-					return layout.Dimensions{
-						Size: image.Point{X: size, Y: size},
-					}
-				})
-			},
-		)
-	})
-	c := m.Stop()
-	bounds := image.Rectangle{Max: dims.Size}
-	defer clip.Ellipse(bounds).Push(gtx.Ops).Pop()
-	c.Add(gtx.Ops)
-	return dims
-}
+// func (b IconActionListItemStyle) Layout(gtx layout.Context) layout.Dimensions {
+// 	m := op.Record(gtx.Ops)
+// 	dims := b.ActionListItem.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+// 		semantic.Button.Add(gtx.Ops)
+// 		if d := b.Description; d != "" {
+// 			semantic.DescriptionOp(b.Description).Add(gtx.Ops)
+// 		}
+// 		return layout.Background{}.Layout(gtx,
+// 			func(gtx layout.Context) layout.Dimensions {
+// 				rr := (gtx.Constraints.Min.X + gtx.Constraints.Min.Y) / 4
+// 				defer clip.UniformRRect(image.Rectangle{Max: gtx.Constraints.Min}, rr).Push(gtx.Ops).Pop()
+// 				background := b.Background
+// 				switch {
+// 				case !gtx.Enabled():
+// 					background = f32color.Disabled(b.Background)
+// 				case b.ActionListItem.Hovered() || gtx.Focused(b.ActionListItem):
+// 					background = f32color.Hovered(b.Background)
+// 				}
+// 				paint.Fill(gtx.Ops, background)
+// 				for _, c := range b.ActionListItem.History() {
+// 					drawInk(gtx, c)
+// 				}
+// 				return layout.Dimensions{Size: gtx.Constraints.Min}
+// 			},
+// 			func(gtx layout.Context) layout.Dimensions {
+// 				return b.Inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+// 					size := gtx.Dp(b.Size)
+// 					if b.Icon != nil {
+// 						gtx.Constraints.Min = image.Point{X: size}
+// 						b.Icon.Layout(gtx, b.Color)
+// 					}
+// 					return layout.Dimensions{
+// 						Size: image.Point{X: size, Y: size},
+// 					}
+// 				})
+// 			},
+// 		)
+// 	})
+// 	c := m.Stop()
+// 	bounds := image.Rectangle{Max: dims.Size}
+// 	defer clip.Ellipse(bounds).Push(gtx.Ops).Pop()
+// 	c.Add(gtx.Ops)
+// 	return dims
+// }
 
 func drawInk(gtx layout.Context, c widget.Press) {
 	// duration is the number of seconds for the
