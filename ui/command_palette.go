@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"strings"
 
 	"gioui.org/io/event"
 	"gioui.org/io/key"
@@ -18,11 +19,11 @@ import (
 )
 
 type CommandPalette struct {
-	SearchInput        *widget.Editor
-	List               *widget.List
-	StringList         []string
-	StringListFiltered []string
-	cursor             int
+	SearchInput      *widget.Editor
+	List             *widget.List
+	Commands         []Command
+	CommandsFiltered []Command
+	cursor           int
 	// commands to callbacks
 	callbacks map[string]func()
 	OnSubmit  func()
@@ -41,43 +42,111 @@ type CommandPalette struct {
 }
 
 type Command struct {
-	Name string
-	Func func()
-	Key  key.Filter
-	Icon *widget.Icon
+	Category string
+	Name     string
+	Func     func()
+	Key      key.Filter
+	Icon     *widget.Icon
 }
 
 func NewCommandPalette() *CommandPalette {
 	cp := &CommandPalette{
-		SearchInput:        &widget.Editor{SingleLine: true, Submit: true, Alignment: text.Start},
-		List:               &widget.List{List: layout.List{Axis: layout.Vertical}},
-		StringList:         []string{},
-		StringListFiltered: []string{},
-		cursor:             -1,
-		callbacks:          make(map[string]func()),
-		shortcutStrings:    make(map[string]string),
-		keys:               make(map[key.Filter]string),
-		clickables:         make(map[string]*widget.Clickable),
-		ClickableLayer:     &widget.Clickable{},
+		SearchInput:      &widget.Editor{SingleLine: true, Submit: true, Alignment: text.Start},
+		List:             &widget.List{List: layout.List{Axis: layout.Vertical}},
+		Commands:         []Command{},
+		CommandsFiltered: []Command{},
+		cursor:           -1,
+		callbacks:        make(map[string]func()),
+		shortcutStrings:  make(map[string]string),
+		keys:             make(map[key.Filter]string),
+		clickables:       make(map[string]*widget.Clickable),
+		ClickableLayer:   &widget.Clickable{},
 	}
-	cp.StringList = []string{}
-	cp.StringListFiltered = []string{}
 	return cp
 }
 
-// this will add a new command to the list of commands
-// that the command palette will display
-// command string must be unique
-func (cp *CommandPalette) RegisterCommand(command string, key key.Filter, callback func()) {
-	cp.StringList = append(cp.StringList, command)
-	cp.StringListFiltered = cp.StringList
-	cp.callbacks[command] = callback
-	cp.clickables[command] = &widget.Clickable{}
-	if key.Name != "" {
-		// log.Printf("[CP] adding key: %v %v to shortcuts", v.Required, v.Name)
-		cp.keys[key] = command
-		cp.shortcutStrings[command] = fmt.Sprintf("%v %v", key.Required, key.Name)
+// Modify RegisterCommand to accept a Command struct
+func (cp *CommandPalette) RegisterCommand(cmd Command) {
+	cp.Commands = append(cp.Commands, cmd)
+	cp.CommandsFiltered = cp.Commands
+	cp.callbacks[cmd.Name] = cmd.Func
+	cp.clickables[cmd.Name] = &widget.Clickable{}
+	if cmd.Key.Name != "" {
+		cp.keys[cmd.Key] = cmd.Name
+		cp.shortcutStrings[cmd.Name] = fmt.Sprintf("%v %v", cmd.Key.Required, cmd.Key.Name)
 	}
+}
+
+// Update the UpdateStringList method to handle categories
+func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
+	searchText := cp.SearchInput.Text()
+
+	// Check if search contains colon for category filtering
+	colonIdx := strings.Index(searchText, ":")
+	if colonIdx >= 0 {
+		category := searchText[:colonIdx]
+		searchAfterColon := searchText[colonIdx+1:]
+
+		// First filter by category
+		categoryFiltered := []Command{}
+		for _, cmd := range cp.Commands {
+			if strings.EqualFold(cmd.Category, category) {
+				categoryFiltered = append(categoryFiltered, cmd)
+			}
+		}
+
+		// Then apply fuzzy search on names
+		cp.CommandsFiltered = []Command{}
+		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, commandNames(categoryFiltered))
+		for _, name := range matchingNames {
+			for _, cmd := range categoryFiltered {
+				if cmd.Name == name {
+					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
+				}
+			}
+		}
+	} else {
+		// Normal search without category filtering
+		cp.CommandsFiltered = []Command{}
+		matchingNames := fuzzy.FindNormalizedFold(searchText, commandNames(cp.Commands))
+		for _, name := range matchingNames {
+			for _, cmd := range cp.Commands {
+				if cmd.Name == name {
+					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
+				}
+			}
+		}
+	}
+
+	if selectFirst {
+		cp.cursor = 0
+	}
+}
+
+// Helper function to get command names
+func commandNames(cmds []Command) []string {
+	names := make([]string, len(cmds))
+	for i, cmd := range cmds {
+		names[i] = cmd.Name
+	}
+	return names
+}
+
+func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
+	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
+	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
+		return margins.Layout(gtx,
+			func(gtx C) D {
+				th2 := *th
+				if i == cp.cursor {
+					th2.Palette.Bg = th2.Palette.ContrastBg
+					th2.Palette.Fg = th.Palette.ContrastFg
+				}
+				cmd := cp.CommandsFiltered[i]
+				return ActionListItem(&th2, cp.clickables[cmd.Name], cmd.Name, cp.shortcutStrings[cmd.Name]).Layout(gtx)
+			},
+		)
+	})
 }
 
 // SetCallback will set the callback for a command
@@ -102,7 +171,7 @@ func (cp *CommandPalette) Call(command string) {
 
 // submit is called when a command is selected from the list
 func (cp *CommandPalette) submit(command string) {
-	// log.Printf("[CP] SUBMIT '%v'", cp.StringListFiltered[cp.cursor])
+	// log.Printf("[CP] SUBMIT '%v'", cp.CommandsFiltered[cp.cursor])
 	log.Printf("[CP] SUBMIT '%v'", command)
 	// if the callback exists, call it
 	cp.Call(command)
@@ -128,26 +197,26 @@ func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
 	)
 }
 
-func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
-	// Define insets for the list items
-	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
-	// layout the list
-	return material.List(th, cp.List).Layout(gtx, len(cp.StringListFiltered), func(gtx C, i int) D {
-		return margins.Layout(gtx,
-			func(gtx C) D {
-				th2 := *th
-				// th2.Font.Size = unit.Dp(16)
-				if i == cp.cursor {
-					th2.Palette.Bg = th2.Palette.ContrastBg
-					th2.Palette.Fg = th.Palette.ContrastFg
-				}
-				command := cp.StringListFiltered[i]
-				return ActionListItem(&th2, cp.clickables[command], command, cp.shortcutStrings[command]).Layout(gtx)
-				// return IconActionListItem(&th2, cp.clickables[command], icons.ContentSave, command).Layout(gtx)
-			},
-		)
-	})
-}
+// func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
+// 	// Define insets for the list items
+// 	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
+// 	// layout the list
+// 	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
+// 		return margins.Layout(gtx,
+// 			func(gtx C) D {
+// 				th2 := *th
+// 				// th2.Font.Size = unit.Dp(16)
+// 				if i == cp.cursor {
+// 					th2.Palette.Bg = th2.Palette.ContrastBg
+// 					th2.Palette.Fg = th.Palette.ContrastFg
+// 				}
+// 				command := cp.CommandsFiltered[i]
+// 				return ActionListItem(&th2, cp.clickables[command], command, cp.shortcutStrings[command]).Layout(gtx)
+// 				// return IconActionListItem(&th2, cp.clickables[command], icons.ContentSave, command).Layout(gtx)
+// 			},
+// 		)
+// 	})
+// }
 
 // handle shortcut keys
 func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
@@ -195,7 +264,7 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 		cp.Reset()
 	}
 	// loop through filtered list and check for clicks
-	for _, command := range cp.StringListFiltered {
+	for _, command := range cp.CommandsFiltered {
 		if cp.clickables[command].Clicked(gtx) {
 			cp.submit(command)
 		}
@@ -207,16 +276,16 @@ func (cp *CommandPalette) Reset() {
 	cp.cursor = -1
 	// log.Println("cp.cursor", cp.cursor)
 	cp.SearchInput.SetText("")
-	cp.StringListFiltered = cp.StringList
+	cp.CommandsFiltered = cp.Commands
 	cp.Visible = false
 }
 
 func (cp *CommandPalette) Show(txt string) {
 	cp.SearchInput.SetText(txt)
 	cp.SearchInput.SetCaret(20, 20)
-	cp.UpdateStringList(false)
+	cp.UpdateCommands(false)
 	cp.cursor = -1
-	// cp.StringListFiltered = cp.StringList
+	// cp.CommandsFiltered = cp.Commands
 	cp.Visible = true
 }
 
@@ -260,7 +329,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 			// handle enter
 			if ev.Name == key.NameReturn {
 				if cp.cursor >= 0 {
-					cp.submit(cp.StringListFiltered[cp.cursor])
+					cp.submit(cp.CommandsFiltered[cp.cursor])
 					cp.Reset() // first submit and then reset
 				}
 			}
@@ -275,8 +344,8 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 			// cursor movement
 			if ev.Name == "↓" || ev.Name == "J" {
 				cp.cursor = cp.cursor + 1
-				if cp.cursor > len(cp.StringListFiltered)-1 {
-					cp.cursor = len(cp.StringListFiltered) - 1
+				if cp.cursor > len(cp.CommandsFiltered)-1 {
+					cp.cursor = len(cp.CommandsFiltered) - 1
 				}
 			}
 			if ev.Name == "↑" || ev.Name == "K" {
@@ -304,7 +373,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 	}
 
 	if inputUpdated {
-		cp.UpdateStringList(true)
+		cp.UpdateCommands(true)
 		// log.Println("input changed!", trimmedString)
 	}
 }
@@ -312,10 +381,10 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 func (cp *CommandPalette) SetCursor(i int) {
 	cp.cursor = i
 }
-func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
+func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 	// trimmedString := strings.TrimSpace(cp.SearchInput.Text())
 	trimmedString := cp.SearchInput.Text()
-	cp.StringListFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.StringList)
+	cp.CommandsFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.Commands)
 	if selectFirst {
 		cp.cursor = 0
 	}
