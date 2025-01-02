@@ -258,15 +258,29 @@ func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 	}
 }
 
-// ProcessPointerEvents will process pointer events
+// // ProcessPointerEvents will process pointer events
+//
+//	func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
+//		if cp.ClickableLayer.Clicked(gtx) {
+//			cp.Reset()
+//		}
+//		// loop through filtered list and check for clicks
+//		for _, command := range cp.CommandsFiltered {
+//			if cp.clickables[command].Clicked(gtx) {
+//				cp.submit(command)
+//			}
+//		}
+//	}
+//
+// In ProcessPointerEvents method
 func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 	if cp.ClickableLayer.Clicked(gtx) {
 		cp.Reset()
 	}
 	// loop through filtered list and check for clicks
 	for _, command := range cp.CommandsFiltered {
-		if cp.clickables[command].Clicked(gtx) {
-			cp.submit(command)
+		if cp.clickables[command.Name].Clicked(gtx) {
+			cp.submit(command.Name) // Use command.Name instead of command
 		}
 	}
 }
@@ -329,8 +343,8 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 			// handle enter
 			if ev.Name == key.NameReturn {
 				if cp.cursor >= 0 {
-					cp.submit(cp.CommandsFiltered[cp.cursor])
-					cp.Reset() // first submit and then reset
+					cp.submit(cp.CommandsFiltered[cp.cursor].Name) // Use .Name here
+					cp.Reset()                                     // first submit and then reset
 				}
 			}
 			// handle escape
@@ -381,10 +395,56 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 func (cp *CommandPalette) SetCursor(i int) {
 	cp.cursor = i
 }
+
+// func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
+// 	// trimmedString := strings.TrimSpace(cp.SearchInput.Text())
+// 	trimmedString := cp.SearchInput.Text()
+// 	cp.CommandsFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.Commands)
+// 	if selectFirst {
+// 		cp.cursor = 0
+// 	}
+// }
+
 func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
-	// trimmedString := strings.TrimSpace(cp.SearchInput.Text())
-	trimmedString := cp.SearchInput.Text()
-	cp.CommandsFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.Commands)
+	searchText := cp.SearchInput.Text()
+
+	// Check if search contains colon for category filtering
+	colonIdx := strings.Index(searchText, ":")
+	if colonIdx >= 0 {
+		category := searchText[:colonIdx]
+		searchAfterColon := searchText[colonIdx+1:]
+
+		// First filter by category
+		categoryFiltered := []Command{}
+		for _, cmd := range cp.Commands {
+			if strings.EqualFold(cmd.Category, category) {
+				categoryFiltered = append(categoryFiltered, cmd)
+			}
+		}
+
+		// Then apply fuzzy search on names
+		cp.CommandsFiltered = []Command{}
+		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, commandNames(categoryFiltered))
+		for _, name := range matchingNames {
+			for _, cmd := range categoryFiltered {
+				if cmd.Name == name {
+					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
+				}
+			}
+		}
+	} else {
+		// Normal search without category filtering
+		cp.CommandsFiltered = []Command{}
+		matchingNames := fuzzy.FindNormalizedFold(searchText, commandNames(cp.Commands))
+		for _, name := range matchingNames {
+			for _, cmd := range cp.Commands {
+				if cmd.Name == name {
+					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
+				}
+			}
+		}
+	}
+
 	if selectFirst {
 		cp.cursor = 0
 	}
