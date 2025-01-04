@@ -165,34 +165,49 @@ func StyledLabel(title string, style ButtonStyle, ctx layout.Context) W {
 	bg := style.Bg
 	fg := style.Fg
 	inset := LayoutToWrapper(layout.UniformInset(style.Inset).Layout)
-	w := func(c C) D {
+	return func(c C) D {
 		c.Constraints.Min.X = 0 // Allow natural width
-		return clickable.Layout(c,
-			Background(bg,
-				inset(
-					// columns(style.Alignment,
-					// Font(style.Font)(FontSize(style.Size)(TextColor(fg)(Label(title)))),
-					FontSize(style.Size)(
-						TextColor(fg)(
-							// Label(title),
-							func(c C) D {
-								// tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: 1}
-								// return tl.Layout(c, Theme.FontFamily, style.Font, style.Size, title, op.CallOp{})
-
-								tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: Theme.MaxLines}
-								// tl.LineHeight = 1
-								// tl.LineHeightScale = 1
-								paint.ColorOp{Color: Theme.TextColor}.Add(c.Ops)
-								return tl.Layout(c, Theme.FontFamily, font.Font{Weight: Theme.FontWeight}, Theme.FontSize, title, op.CallOp{})
-
-							},
-						),
+		return Background(bg,
+			inset(
+				FontSize(style.Size)(
+					TextColor(fg)(
+						func(c C) D {
+							tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: 1}
+							return tl.Layout(c, Theme.FontFamily, style.Font, style.Size, title, op.CallOp{})
+						},
 					),
 				),
 			),
-		)
+		)(c)
 	}
-	return w
+	// w := func(c C) D {
+	// 	c.Constraints.Min.X = 0 // Allow natural width
+	// 	return clickable.Layout(c,
+	// 		Background(bg,
+	// 			inset(
+	// 				// columns(style.Alignment,
+	// 				// Font(style.Font)(FontSize(style.Size)(TextColor(fg)(Label(title)))),
+	// 				FontSize(style.Size)(
+	// 					TextColor(fg)(
+	// 						// Label(title),
+	// 						func(c C) D {
+	// 							// tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: 1}
+	// 							// return tl.Layout(c, Theme.FontFamily, style.Font, style.Size, title, op.CallOp{})
+
+	// 							tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: Theme.MaxLines}
+	// 							// tl.LineHeight = 1
+	// 							// tl.LineHeightScale = 1
+	// 							paint.ColorOp{Color: Theme.TextColor}.Add(c.Ops)
+	// 							return tl.Layout(c, Theme.FontFamily, font.Font{Weight: Theme.FontWeight}, Theme.FontSize, title, op.CallOp{})
+
+	// 						},
+	// 					),
+	// 				),
+	// 			),
+	// 		),
+	// 	)
+	// }
+	// return w
 }
 
 func DefaultButton(clickable *Clickable, icon W, title string, onclick func(), ctx layout.Context) W {
