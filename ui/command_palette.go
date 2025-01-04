@@ -77,9 +77,55 @@ func (cp *CommandPalette) RegisterCommand(cmd Command) {
 	}
 }
 
-// Update the UpdateStringList method to handle categories
-func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
-	// remove trailing spaces
+// // Update the UpdateStringList method to handle categories
+// func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
+// 	// remove trailing spaces
+// 	searchText := cp.SearchInput.Text()
+// 	searchText = strings.TrimSpace(searchText)
+
+// 	// Check if search contains colon for category filtering
+// 	colonIdx := strings.Index(searchText, ":")
+// 	if colonIdx >= 0 {
+// 		category := searchText[:colonIdx]
+// 		searchAfterColon := searchText[colonIdx+1:]
+
+// 		// First filter by category
+// 		categoryFiltered := []Command{}
+// 		for _, cmd := range cp.Commands {
+// 			if strings.EqualFold(cmd.Category, category) {
+// 				categoryFiltered = append(categoryFiltered, cmd)
+// 			}
+// 		}
+
+// 		// Then apply fuzzy search on names
+// 		cp.CommandsFiltered = []Command{}
+// 		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, commandNames(categoryFiltered))
+// 		for _, name := range matchingNames {
+// 			for _, cmd := range categoryFiltered {
+// 				if cmd.Name == name {
+// 					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
+// 				}
+// 			}
+// 		}
+// 	} else {
+// 		// Normal search without category filtering
+// 		cp.CommandsFiltered = []Command{}
+// 		matchingNames := fuzzy.FindNormalizedFold(searchText, commandNames(cp.Commands))
+// 		for _, name := range matchingNames {
+// 			for _, cmd := range cp.Commands {
+// 				if cmd.Name == name {
+// 					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	if selectFirst {
+// 		cp.cursor = 0
+// 	}
+// }
+
+func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 	searchText := cp.SearchInput.Text()
 	searchText = strings.TrimSpace(searchText)
 
@@ -374,51 +420,6 @@ func (cp *CommandPalette) SetCursor(i int) {
 // 		cp.cursor = 0
 // 	}
 // }
-
-func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
-	searchText := cp.SearchInput.Text()
-
-	// Check if search contains colon for category filtering
-	colonIdx := strings.Index(searchText, ":")
-	if colonIdx >= 0 {
-		category := searchText[:colonIdx]
-		searchAfterColon := searchText[colonIdx+1:]
-
-		// First filter by category
-		categoryFiltered := []Command{}
-		for _, cmd := range cp.Commands {
-			if strings.EqualFold(cmd.Category, category) {
-				categoryFiltered = append(categoryFiltered, cmd)
-			}
-		}
-
-		// Then apply fuzzy search on names
-		cp.CommandsFiltered = []Command{}
-		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, commandNames(categoryFiltered))
-		for _, name := range matchingNames {
-			for _, cmd := range categoryFiltered {
-				if cmd.Name == name {
-					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
-				}
-			}
-		}
-	} else {
-		// Normal search without category filtering
-		cp.CommandsFiltered = []Command{}
-		matchingNames := fuzzy.FindNormalizedFold(searchText, commandNames(cp.Commands))
-		for _, name := range matchingNames {
-			for _, cmd := range cp.Commands {
-				if cmd.Name == name {
-					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
-				}
-			}
-		}
-	}
-
-	if selectFirst {
-		cp.cursor = 0
-	}
-}
 
 func (cp *CommandPalette) Update(gtx layout.Context) {
 	cp.HandleShortcutKeys(gtx)
