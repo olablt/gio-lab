@@ -79,7 +79,9 @@ func (cp *CommandPalette) RegisterCommand(cmd Command) {
 
 // Update the UpdateStringList method to handle categories
 func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
+	// remove trailing spaces
 	searchText := cp.SearchInput.Text()
+	searchText = strings.TrimSpace(searchText)
 
 	// Check if search contains colon for category filtering
 	colonIdx := strings.Index(searchText, ":")
@@ -132,23 +134,6 @@ func commandNames(cmds []Command) []string {
 	return names
 }
 
-func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
-	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
-	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
-		return margins.Layout(gtx,
-			func(gtx C) D {
-				th2 := *th
-				if i == cp.cursor {
-					th2.Palette.Bg = th2.Palette.ContrastBg
-					th2.Palette.Fg = th.Palette.ContrastFg
-				}
-				cmd := cp.CommandsFiltered[i]
-				return ActionListItem(&th2, cp.clickables[cmd.Name], cmd.Name, cp.shortcutStrings[cmd.Name]).Layout(gtx)
-			},
-		)
-	})
-}
-
 // SetCallback will set the callback for a command
 func (cp *CommandPalette) SetCallback(command string, callback func()) {
 	// check if the command exists
@@ -180,21 +165,6 @@ func (cp *CommandPalette) submit(command string) {
 		cp.OnSubmit()
 	}
 	cp.Reset()
-}
-
-func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
-	// layout
-	margins := layout.UniformInset(unit.Dp(5))
-	// margins := layout.UniformInset(unit.Dp(0))
-	return margins.Layout(gtx,
-		TextInput(cp.SearchInput, "Text Input"),
-		// func(gtx C) D {
-		// 	// Wrap the editor in material design
-		// 	// ed := material.Editor(th, cp.SearchInput, "Search")
-		// 	ed := TextInput(cp.SearchInput, "Text Input")
-		// 	return ed.Layout(gtx)
-		// },
-	)
 }
 
 // func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
@@ -499,4 +469,36 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 			return layout.Dimensions{Size: image.Point{w, h}}
 		})
 
+}
+
+func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
+	// layout
+	margins := layout.UniformInset(unit.Dp(5))
+	// margins := layout.UniformInset(unit.Dp(0))
+	return margins.Layout(gtx,
+		TextInput(cp.SearchInput, "Text Input"),
+		// func(gtx C) D {
+		// 	// Wrap the editor in material design
+		// 	// ed := material.Editor(th, cp.SearchInput, "Search")
+		// 	ed := TextInput(cp.SearchInput, "Text Input")
+		// 	return ed.Layout(gtx)
+		// },
+	)
+}
+
+func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
+	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
+	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
+		return margins.Layout(gtx,
+			func(gtx C) D {
+				th2 := *th
+				if i == cp.cursor {
+					th2.Palette.Bg = th2.Palette.ContrastBg
+					th2.Palette.Fg = th.Palette.ContrastFg
+				}
+				cmd := cp.CommandsFiltered[i]
+				return ActionListItem(&th2, cp.clickables[cmd.Name], cmd.Name, cp.shortcutStrings[cmd.Name]).Layout(gtx)
+			},
+		)
+	})
 }
