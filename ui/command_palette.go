@@ -175,8 +175,8 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 func commandNames(cmds []Command) []string {
 	names := make([]string, len(cmds))
 	for i, cmd := range cmds {
-		// names[i] = cmd.Name
-		names[i] = cmd.Category
+		names[i] = cmd.Name
+		// names[i] = cmd.Category
 		// names[i] = cmd.Category + ": " + cmd.Name
 	}
 	return names
