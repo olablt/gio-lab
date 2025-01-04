@@ -79,54 +79,6 @@ func (cp *CommandPalette) RegisterCommand(cmd Command) {
 	}
 }
 
-// // Update the UpdateStringList method to handle categories
-// func (cp *CommandPalette) UpdateStringList(selectFirst bool) {
-// 	// remove trailing spaces
-// 	searchText := cp.SearchInput.Text()
-// 	searchText = strings.TrimSpace(searchText)
-
-// 	// Check if search contains colon for category filtering
-// 	colonIdx := strings.Index(searchText, ":")
-// 	if colonIdx >= 0 {
-// 		category := searchText[:colonIdx]
-// 		searchAfterColon := searchText[colonIdx+1:]
-
-// 		// First filter by category
-// 		categoryFiltered := []Command{}
-// 		for _, cmd := range cp.Commands {
-// 			if strings.EqualFold(cmd.Category, category) {
-// 				categoryFiltered = append(categoryFiltered, cmd)
-// 			}
-// 		}
-
-// 		// Then apply fuzzy search on names
-// 		cp.CommandsFiltered = []Command{}
-// 		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, commandNames(categoryFiltered))
-// 		for _, name := range matchingNames {
-// 			for _, cmd := range categoryFiltered {
-// 				if cmd.Name == name {
-// 					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
-// 				}
-// 			}
-// 		}
-// 	} else {
-// 		// Normal search without category filtering
-// 		cp.CommandsFiltered = []Command{}
-// 		matchingNames := fuzzy.FindNormalizedFold(searchText, commandNames(cp.Commands))
-// 		for _, name := range matchingNames {
-// 			for _, cmd := range cp.Commands {
-// 				if cmd.Name == name {
-// 					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	if selectFirst {
-// 		cp.cursor = 0
-// 	}
-// }
-
 // UpdateCommands filters the command list based on search text
 // If there's a category (text before ':'), it filters by category first
 // Then it uses fuzzy search to find matching command names
@@ -148,9 +100,13 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 			}
 		}
 
-		// Then apply fuzzy search on names
+		// Then apply fuzzy search on names only (not categories)
 		cp.CommandsFiltered = []Command{}
-		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, commandNames(categoryFiltered))
+		names := make([]string, len(categoryFiltered))
+		for i, cmd := range categoryFiltered {
+			names[i] = cmd.Name // Search only names when category filtered
+		}
+		matchingNames := fuzzy.FindNormalizedFold(searchAfterColon, names)
 		for _, name := range matchingNames {
 			for _, cmd := range categoryFiltered {
 				if cmd.Name == name {
@@ -159,12 +115,16 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 			}
 		}
 	} else {
-		// Normal search without category filtering
+		// Normal search without category filtering - search both category and name
 		cp.CommandsFiltered = []Command{}
-		matchingNames := fuzzy.FindNormalizedFold(searchText, commandNames(cp.Commands))
-		for _, name := range matchingNames {
+		searchTerms := make([]string, len(cp.Commands))
+		for i, cmd := range cp.Commands {
+			searchTerms[i] = fmt.Sprintf("%s: %s", cmd.Category, cmd.Name)
+		}
+		matchingTerms := fuzzy.FindNormalizedFold(searchText, searchTerms)
+		for _, term := range matchingTerms {
 			for _, cmd := range cp.Commands {
-				if cmd.Name == name {
+				if fmt.Sprintf("%s: %s", cmd.Category, cmd.Name) == term {
 					cp.CommandsFiltered = append(cp.CommandsFiltered, cmd)
 				}
 			}
@@ -176,20 +136,6 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 	}
 }
 
-// Helper function to get command names
-// commandNames extracts just the names from a list of commands
-func commandNames(cmds []Command) []string {
-	names := make([]string, len(cmds))
-	for i, cmd := range cmds {
-		// names[i] = cmd.Name
-		names[i] = fmt.Sprintf("%s: %s", cmd.Category, cmd.Name)
-		// names[i] = cmd.Category
-		// names[i] = cmd.Category + ": " + cmd.Name
-	}
-	return names
-}
-
-// SetCallback will set the callback for a command
 // SetCallback changes what happens when a specific command is executed
 func (cp *CommandPalette) SetCallback(command string, callback func()) {
 	// check if the command exists
@@ -200,7 +146,6 @@ func (cp *CommandPalette) SetCallback(command string, callback func()) {
 	cp.callbacks[command] = callback
 }
 
-// Call calls the callback for a command
 // Call executes the function associated with a command
 func (cp *CommandPalette) Call(command string) {
 	// check if the command exists
@@ -211,7 +156,6 @@ func (cp *CommandPalette) Call(command string) {
 	cp.callbacks[command]()
 }
 
-// submit is called when a command is selected from the list
 // submit executes a command and resets the palette
 func (cp *CommandPalette) submit(command string) {
 	// log.Printf("[CP] SUBMIT '%v'", cp.CommandsFiltered[cp.cursor])
@@ -225,30 +169,11 @@ func (cp *CommandPalette) submit(command string) {
 	cp.Reset()
 }
 
-// func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
-// 	// Define insets for the list items
-// 	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
-// 	// layout the list
-// 	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
-// 		return margins.Layout(gtx,
-// 			func(gtx C) D {
-// 				th2 := *th
-// 				// th2.Font.Size = unit.Dp(16)
-// 				if i == cp.cursor {
-// 					th2.Palette.Bg = th2.Palette.ContrastBg
-// 					th2.Palette.Fg = th.Palette.ContrastFg
-// 				}
-// 				command := cp.CommandsFiltered[i]
-// 				return ActionListItem(&th2, cp.clickables[command], command, cp.shortcutStrings[command]).Layout(gtx)
-// 				// return IconActionListItem(&th2, cp.clickables[command], icons.ContentSave, command).Layout(gtx)
-// 			},
-// 		)
-// 	})
-// }
-
-// handle shortcut keys
 // HandleShortcutKeys checks for keyboard shortcuts and executes their commands
 func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
+	if cp.Visible {
+		return
+	}
 	// tag := &cp.SearchInput
 	// event.Op(gtx.Ops, tag)
 	filters := []event.Filter{}
@@ -276,31 +201,11 @@ func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 			filter := key.Filter{Name: ev.Name, Required: ev.Modifiers}
 			if command, ok := cp.keys[filter]; ok {
 				cp.submit(command)
-				// cp.submit(cp.cursor)
-				// // log.Printf("[CP] found command for shortcut %v %v: %v", ev.Modifiers, ev.Name, command)
-				// // check if the callback exists and call it
-				// if callback, ok := cp.callbacks[command]; ok && callback != nil {
-				// 	callback()
-				// }
 			}
 		}
 	}
 }
 
-// // ProcessPointerEvents will process pointer events
-//
-//	func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
-//		if cp.ClickableLayer.Clicked(gtx) {
-//			cp.Reset()
-//		}
-//		// loop through filtered list and check for clicks
-//		for _, command := range cp.CommandsFiltered {
-//			if cp.clickables[command].Clicked(gtx) {
-//				cp.submit(command)
-//			}
-//		}
-//	}
-//
 // In ProcessPointerEvents method
 // ProcessPointerEvents handles mouse clicks on the command palette
 func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
@@ -315,7 +220,6 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 	}
 }
 
-// Reset will reset the command palette - clear the search input and reset the list
 // Reset clears the search and hides the command palette
 func (cp *CommandPalette) Reset() {
 	cp.cursor = -1
@@ -335,7 +239,6 @@ func (cp *CommandPalette) Show(txt string) {
 	cp.Visible = true
 }
 
-// ProcessKeyEvents will process key events
 // ProcessKeyEvents handles keyboard input for navigation and selection
 func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 	// tag := &cp.SearchInput
@@ -351,9 +254,6 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 		key.Filter{Name: key.NameEscape},
 		// key.FocusFilter{Target: tag},
 		// key.Filter{Focus: tag, Name: "↑"},
-		// key.Filter{Focus: tag, Name: "↓"},
-		// key.Filter{Focus: tag, Name: "J", Required: key.ModCtrl},
-		// key.Filter{Focus: tag, Name: "K", Required: key.ModCtrl},
 	}
 	// check for new key events
 	cp.KeyPress = false
@@ -421,7 +321,6 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 
 	if inputUpdated {
 		cp.UpdateCommands(true)
-		// log.Println("input changed!", trimmedString)
 	}
 }
 
@@ -430,39 +329,17 @@ func (cp *CommandPalette) SetCursor(i int) {
 	cp.cursor = i
 }
 
-// func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
-// 	// trimmedString := strings.TrimSpace(cp.SearchInput.Text())
-// 	trimmedString := cp.SearchInput.Text()
-// 	cp.CommandsFiltered = fuzzy.FindNormalizedFold(trimmedString, cp.Commands)
-// 	if selectFirst {
-// 		cp.cursor = 0
-// 	}
-// }
-
 // Update processes all events (keyboard, mouse, etc) for the command palette
 func (cp *CommandPalette) Update(gtx layout.Context) {
 	cp.HandleShortcutKeys(gtx)
 	// process pointer events
 	cp.ProcessPointerEvents(gtx)
-
 	// process key events
 	cp.ProcessKeyEvents(gtx)
 }
 
 // Layout draws the command palette on screen
 func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
-	// process events
-
-	// // layout elements
-	// return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-	// 	layout.Rigid(func(gtx C) D {
-	// 		return cp.InputLayout(gtx, th)
-	// 	}),
-	// 	layout.Flexed(1, func(gtx layout.Context) D {
-	// 		return cp.ListLayout(gtx, th)
-	// 	}),
-	// )
-
 	return layout.Background{}.Layout(gtx,
 		func(gtx layout.Context) layout.Dimensions {
 			// semi transparent background
@@ -496,21 +373,17 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
 	// layout
 	margins := layout.UniformInset(unit.Dp(5))
-	// margins := layout.UniformInset(unit.Dp(0))
 	return margins.Layout(gtx,
 		TextInput(cp.SearchInput, "Text Input"),
-		// func(gtx C) D {
-		// 	// Wrap the editor in material design
-		// 	// ed := material.Editor(th, cp.SearchInput, "Search")
-		// 	ed := TextInput(cp.SearchInput, "Text Input")
-		// 	return ed.Layout(gtx)
-		// },
 	)
 }
 
 // ListLayout draws the filtered list of commands
 func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
+	// Check if we're in category filter mode
+	searchText := strings.TrimSpace(cp.SearchInput.Text())
+	inCategoryMode := strings.Contains(searchText, ":")
 	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
 		return margins.Layout(gtx,
 			func(gtx C) D {
@@ -521,7 +394,7 @@ func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 				}
 				cmd := cp.CommandsFiltered[i]
 				displayName := cmd.Name
-				if cmd.Category != "" {
+				if !inCategoryMode {
 					displayName = fmt.Sprintf("%s: %s", cmd.Category, cmd.Name)
 				}
 				return ActionListItem(&th2, cp.clickables[cmd.Name], displayName, cp.shortcutStrings[cmd.Name]).Layout(gtx)

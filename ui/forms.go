@@ -124,16 +124,17 @@ func StyledButton(clickable *Clickable, title string, onclick func(), ctx layout
 	_ = fg
 	_ = bg
 
-	// inset := LayoutToWrapper(layout.UniformInset(style.Inset).Layout)
+	inset := LayoutToWrapper(layout.UniformInset(style.Inset).Layout)
 	w := func(c C) D {
+		c.Constraints.Min.X = 0 // Allow natural width
 		return clickable.Layout(c,
-			// Background(bg,
-			// inset(
-			// columns(style.Alignment,
-			Label(title),
+			Background(bg,
+				inset(
+					// columns(style.Alignment,
+					Label(title),
+				),
 			// ),
-			// ),
-			// ),
+			),
 		)
 	}
 	return w
