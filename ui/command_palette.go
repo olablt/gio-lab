@@ -49,6 +49,7 @@ type Command struct {
 	Icon     *widget.Icon
 }
 
+// NewCommandPalette creates a new command palette with default settings
 func NewCommandPalette() *CommandPalette {
 	cp := &CommandPalette{
 		SearchInput:      &widget.Editor{SingleLine: true, Submit: true, Alignment: text.Start},
@@ -66,6 +67,7 @@ func NewCommandPalette() *CommandPalette {
 }
 
 // Modify RegisterCommand to accept a Command struct
+// RegisterCommand adds a new command to the palette that can be searched and executed
 func (cp *CommandPalette) RegisterCommand(cmd Command) {
 	cp.Commands = append(cp.Commands, cmd)
 	cp.CommandsFiltered = cp.Commands
@@ -125,6 +127,9 @@ func (cp *CommandPalette) RegisterCommand(cmd Command) {
 // 	}
 // }
 
+// UpdateCommands filters the command list based on search text
+// If there's a category (text before ':'), it filters by category first
+// Then it uses fuzzy search to find matching command names
 func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 	searchText := cp.SearchInput.Text()
 	searchText = strings.TrimSpace(searchText)
@@ -172,6 +177,7 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 }
 
 // Helper function to get command names
+// commandNames extracts just the names from a list of commands
 func commandNames(cmds []Command) []string {
 	names := make([]string, len(cmds))
 	for i, cmd := range cmds {
@@ -183,6 +189,7 @@ func commandNames(cmds []Command) []string {
 }
 
 // SetCallback will set the callback for a command
+// SetCallback changes what happens when a specific command is executed
 func (cp *CommandPalette) SetCallback(command string, callback func()) {
 	// check if the command exists
 	if _, ok := cp.callbacks[command]; !ok {
@@ -193,6 +200,7 @@ func (cp *CommandPalette) SetCallback(command string, callback func()) {
 }
 
 // Call calls the callback for a command
+// Call executes the function associated with a command
 func (cp *CommandPalette) Call(command string) {
 	// check if the command exists
 	if call, ok := cp.callbacks[command]; !ok || call == nil {
@@ -203,6 +211,7 @@ func (cp *CommandPalette) Call(command string) {
 }
 
 // submit is called when a command is selected from the list
+// submit executes a command and resets the palette
 func (cp *CommandPalette) submit(command string) {
 	// log.Printf("[CP] SUBMIT '%v'", cp.CommandsFiltered[cp.cursor])
 	log.Printf("[CP] SUBMIT '%v'", command)
@@ -237,6 +246,7 @@ func (cp *CommandPalette) submit(command string) {
 // }
 
 // handle shortcut keys
+// HandleShortcutKeys checks for keyboard shortcuts and executes their commands
 func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 	// tag := &cp.SearchInput
 	// event.Op(gtx.Ops, tag)
@@ -291,6 +301,7 @@ func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 //	}
 //
 // In ProcessPointerEvents method
+// ProcessPointerEvents handles mouse clicks on the command palette
 func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 	if cp.ClickableLayer.Clicked(gtx) {
 		cp.Reset()
@@ -304,6 +315,7 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 }
 
 // Reset will reset the command palette - clear the search input and reset the list
+// Reset clears the search and hides the command palette
 func (cp *CommandPalette) Reset() {
 	cp.cursor = -1
 	// log.Println("cp.cursor", cp.cursor)
@@ -312,6 +324,7 @@ func (cp *CommandPalette) Reset() {
 	cp.Visible = false
 }
 
+// Show makes the command palette visible with initial search text
 func (cp *CommandPalette) Show(txt string) {
 	cp.SearchInput.SetText(txt)
 	cp.SearchInput.SetCaret(20, 20)
@@ -322,6 +335,7 @@ func (cp *CommandPalette) Show(txt string) {
 }
 
 // ProcessKeyEvents will process key events
+// ProcessKeyEvents handles keyboard input for navigation and selection
 func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 	// tag := &cp.SearchInput
 	// event.Op(gtx.Ops, tag)
@@ -410,6 +424,7 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 	}
 }
 
+// SetCursor changes which item is highlighted in the command list
 func (cp *CommandPalette) SetCursor(i int) {
 	cp.cursor = i
 }
@@ -423,6 +438,7 @@ func (cp *CommandPalette) SetCursor(i int) {
 // 	}
 // }
 
+// Update processes all events (keyboard, mouse, etc) for the command palette
 func (cp *CommandPalette) Update(gtx layout.Context) {
 	cp.HandleShortcutKeys(gtx)
 	// process pointer events
@@ -432,6 +448,7 @@ func (cp *CommandPalette) Update(gtx layout.Context) {
 	cp.ProcessKeyEvents(gtx)
 }
 
+// Layout draws the command palette on screen
 func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 	// process events
 
@@ -474,6 +491,7 @@ func (cp *CommandPalette) Layout(gtx layout.Context, th *material.Theme) D {
 
 }
 
+// InputLayout draws the search input box
 func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
 	// layout
 	margins := layout.UniformInset(unit.Dp(5))
@@ -489,6 +507,7 @@ func (cp *CommandPalette) InputLayout(gtx C, th *material.Theme) D {
 	)
 }
 
+// ListLayout draws the filtered list of commands
 func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 	margins := layout.Inset{Top: unit.Dp(0), Right: unit.Dp(0), Bottom: unit.Dp(5), Left: unit.Dp(5)}
 	return material.List(th, cp.List).Layout(gtx, len(cp.CommandsFiltered), func(gtx C, i int) D {
