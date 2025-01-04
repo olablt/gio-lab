@@ -181,7 +181,8 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 func commandNames(cmds []Command) []string {
 	names := make([]string, len(cmds))
 	for i, cmd := range cmds {
-		names[i] = cmd.Name
+		// names[i] = cmd.Name
+		names[i] = fmt.Sprintf("%s: %s", cmd.Category, cmd.Name)
 		// names[i] = cmd.Category
 		// names[i] = cmd.Category + ": " + cmd.Name
 	}
@@ -519,7 +520,11 @@ func (cp *CommandPalette) ListLayout(gtx C, th *material.Theme) D {
 					th2.Palette.Fg = th.Palette.ContrastFg
 				}
 				cmd := cp.CommandsFiltered[i]
-				return ActionListItem(&th2, cp.clickables[cmd.Name], cmd.Name, cp.shortcutStrings[cmd.Name]).Layout(gtx)
+				displayName := cmd.Name
+				if cmd.Category != "" {
+					displayName = fmt.Sprintf("%s: %s", cmd.Category, cmd.Name)
+				}
+				return ActionListItem(&th2, cp.clickables[cmd.Name], displayName, cp.shortcutStrings[cmd.Name]).Layout(gtx)
 			},
 		)
 	})
