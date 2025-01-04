@@ -71,6 +71,8 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 	th := material.NewTheme()
 	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
 	th.Shaper = GetShaper()
+	FontShaper = th.Shaper
+	Theme.FontFamily = FontShaper
 
 	// Create signal channel for Ctrl+C
 	sigChan := make(chan os.Signal, 1)

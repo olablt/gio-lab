@@ -74,6 +74,18 @@ func Font(f *text.Shaper) Wrapper {
 	}
 }
 
+// func Font(f *font.Font) Wrapper {
+// 	return func(w W) W {
+// 		return func(c C) D {
+// 			old := Theme.FontFamily
+// 			Theme.FontFamily = f
+// 			d := w(c)
+// 			Theme.FontFamily = old
+// 			return d
+// 		}
+// 	}
+// }
+
 func FontWeight(f font.Weight) Wrapper {
 	return func(w W) W {
 		return func(c C) D {
