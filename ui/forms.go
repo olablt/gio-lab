@@ -161,6 +161,7 @@ func StyledButton(clickable *Clickable, title string, onclick func(), ctx layout
 	}
 	return w
 }
+
 func StyledLabel(title string, style ButtonStyle, ctx layout.Context) W {
 	bg := style.Bg
 	fg := style.Fg
@@ -169,14 +170,15 @@ func StyledLabel(title string, style ButtonStyle, ctx layout.Context) W {
 		c.Constraints.Min.X = 0 // Allow natural width
 		return Background(bg,
 			inset(
-				FontSize(style.Size)(
-					TextColor(fg)(
-						func(c C) D {
-							tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: 1}
-							return tl.Layout(c, Theme.FontFamily, style.Font, style.Size, title, op.CallOp{})
-						},
-					),
-				),
+				// FontSize(style.Size)(
+				// TextColor(fg)(
+				func(c C) D {
+					tl := widget.Label{Alignment: Theme.TextAlignment, MaxLines: 1}
+					paint.ColorOp{Color: fg}.Add(c.Ops)
+					return tl.Layout(c, Theme.FontFamily, style.Font, style.Size, title, op.CallOp{})
+				},
+				// ),
+				// ),
 			),
 		)(c)
 	}
