@@ -16,10 +16,12 @@ import (
 
 type (
 	Clickable = widget.Clickable
+	Bool      = widget.Bool
 	Editor    = widget.Editor
 )
 
 type Clickables map[string]*Clickable
+type Bools map[string]*Bool
 type Editors map[string]*Editor
 
 func NewClickables() Clickables {
@@ -46,6 +48,21 @@ func OnClick(btn *Clickable, w W, onclick func(), ctx layout.Context) W {
 		return btn.Layout(c, w)
 	}
 
+}
+
+func NewBools() Bools {
+	return map[string]*Bool{}
+}
+
+func (c Bools) Get(id string) *Bool {
+	if btn, ok := c[id]; ok {
+		return btn
+	}
+
+	btn := new(Bool)
+	c[id] = btn
+
+	return btn
 }
 
 func NewEditors() Editors {

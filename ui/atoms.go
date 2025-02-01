@@ -7,6 +7,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/unit"
 	"gioui.org/widget"
 )
 
@@ -67,7 +68,7 @@ func HR(sz int) W {
 	}
 }
 
-func VR(sz int) W {
+func VR(sz unit.Dp) W {
 	return func(c C) D {
 		cl := clip.Path{}
 		cl.Begin(c.Ops)
@@ -76,12 +77,12 @@ func VR(sz int) W {
 
 		defer clip.Stroke{
 			Path:  cl.End(),
-			Width: float32(sz),
+			Width: float32(c.Metric.Dp(sz)),
 		}.Op().Push(c.Ops).Pop()
 
 		paint.Fill(c.Ops, Alpha(BorderColor, 10))
 		// paint.Fill(c.Ops, BorderColorMuted)
 
-		return D{Size: P{sz, c.Constraints.Min.Y}}
+		return D{Size: P{c.Metric.Dp(sz), c.Constraints.Min.Y}}
 	}
 }
