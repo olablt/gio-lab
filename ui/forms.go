@@ -97,6 +97,17 @@ func TextInput(editor *widget.Editor, hint string) W {
 	)
 }
 
+func TextInputWithKeys(editor *widget.Editor, hint string) W {
+	return func(gtx layout.Context) layout.Dimensions {
+		// Create an input area for key events
+		// input := key.InputOp{Tag: editor, Keys: key.NameFilterPrintable}.Push(gtx.Ops)
+		// defer input.Pop()
+
+		// Layout the editor
+		return material.Editor(TH, editor, hint).Layout(gtx)
+	}
+}
+
 type ButtonStyle struct {
 	Bg        color.NRGBA
 	Fg        color.NRGBA
@@ -270,6 +281,8 @@ func IconButton(clickable *Clickable, icon W, title string, onclick func(), ctx 
 		pointer.CursorPointer.Add(ctx.Ops) // set mouse cursor
 	}
 	w := func(c C) D {
+		c.Constraints.Min.X = 0 // Allow natural width
+		// ctx.Constraints.Max.X = 0 // Allow natural width
 		return clickable.Layout(c,
 			RoundedCorners(
 				// ui.Background(ui.BgColorMuted,
@@ -286,31 +299,4 @@ func IconButton(clickable *Clickable, icon W, title string, onclick func(), ctx 
 		)
 	}
 	return w
-}
-
-func Centered(w W) W {
-	return func(c C) D {
-		v := layout.Flex{Axis: layout.Vertical, Spacing: layout.SpaceAround}
-		h := layout.Flex{Axis: layout.Horizontal, Spacing: layout.SpaceAround}
-		return h.Layout(c, Rigid(func(c C) D {
-			return v.Layout(c, Rigid(w))
-		}))
-	}
-}
-
-func Constraint(width, height int, w W) W {
-	return func(c C) D {
-		wdp := c.Metric.Dp(DP(width))
-		hdp := c.Metric.Dp(DP(height))
-		c.Constraints.Max = P{wdp, hdp}
-		return w(c)
-	}
-}
-
-func ConstraintW(width int, w W) W {
-	return func(c C) D {
-		c.Constraints.Min.X = c.Metric.Dp(DP(width))
-		c.Constraints.Max.X = c.Metric.Dp(DP(width))
-		return w(c)
-	}
 }

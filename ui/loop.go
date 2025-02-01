@@ -154,6 +154,7 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 				// so that the other goroutine can continue.
 				acks <- struct{}{}
 			case <-refresh:
+				// log.Println("refreshing...")
 				// case newText := <-someChannel:
 				// 	// ed.SetText(newTextefresh:
 				// ed.SetText(newText)

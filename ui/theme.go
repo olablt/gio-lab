@@ -16,11 +16,14 @@ type ThemeStyle struct {
 	TextColor     color.NRGBA
 }
 
+// Text:           color.NRGBA{189, 195, 199, 255}, // silver sand
+
 var Theme = ThemeStyle{
-	FontSize:      13,
+	FontSize:      12,
 	FontFamily:    FontShaper,
 	FontWeight:    font.Normal,
 	TextAlignment: text.Start,
-	TextColor:     FgColor,
-	MaxLines:      0,
+	// TextColor:     FgColor,
+	TextColor: color.NRGBA{189, 195, 199, 255}, // silver sand
+	MaxLines:  0,
 }

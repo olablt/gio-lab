@@ -5,6 +5,7 @@ import (
 	"image"
 	"log"
 	"strings"
+	"sync"
 
 	"gioui.org/io/event"
 	"gioui.org/io/key"
@@ -39,6 +40,7 @@ type CommandPalette struct {
 	KeyPress       bool
 	Key            key.Name
 	ClickableLayer *widget.Clickable
+	sync.Mutex
 }
 
 type Command struct {
@@ -138,6 +140,8 @@ func (cp *CommandPalette) UpdateCommands(selectFirst bool) {
 
 // SetCallback changes what happens when a specific command is executed
 func (cp *CommandPalette) SetCallback(command string, callback func()) {
+	// cp.Lock()
+	// defer cp.Unlock()
 	// check if the command exists
 	if _, ok := cp.callbacks[command]; !ok {
 		log.Printf("[CP] command '%v' does not exist", command)
@@ -148,6 +152,8 @@ func (cp *CommandPalette) SetCallback(command string, callback func()) {
 
 // Call executes the function associated with a command
 func (cp *CommandPalette) Call(command string) {
+	// cp.Lock()
+	// defer cp.Unlock()
 	// check if the command exists
 	if call, ok := cp.callbacks[command]; !ok || call == nil {
 		log.Printf("[CP] command '%v' does not exist", command)
@@ -222,6 +228,8 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 
 // Reset clears the search and hides the command palette
 func (cp *CommandPalette) Reset() {
+	// cp.Lock()
+	// defer cp.Unlock()
 	cp.cursor = -1
 	// log.Println("cp.cursor", cp.cursor)
 	cp.SearchInput.SetText("")

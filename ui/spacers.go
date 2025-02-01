@@ -7,6 +7,7 @@ import (
 
 // Insets
 var (
+	Inset02 = LayoutToWrapper(layout.UniformInset(SpaceUnit * 0.2).Layout)
 	Inset05 = LayoutToWrapper(layout.UniformInset(SpaceUnit * 0.5).Layout)
 	Inset1  = LayoutToWrapper(layout.UniformInset(SpaceUnit).Layout)
 	Inset2  = LayoutToWrapper(layout.UniformInset(SpaceUnit * 2).Layout)

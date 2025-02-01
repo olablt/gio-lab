@@ -79,7 +79,8 @@ func VR(sz int) W {
 			Width: float32(sz),
 		}.Op().Push(c.Ops).Pop()
 
-		paint.Fill(c.Ops, BorderColor)
+		paint.Fill(c.Ops, Alpha(BorderColor, 10))
+		// paint.Fill(c.Ops, BorderColorMuted)
 
 		return D{Size: P{sz, c.Constraints.Min.Y}}
 	}
