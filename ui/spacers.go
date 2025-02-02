@@ -19,12 +19,13 @@ var (
 
 // Spaces
 var (
-	WSpacer1 = layout.Spacer{Width: SpaceUnit}.Layout
-	WSpacer2 = layout.Spacer{Width: SpaceUnit * 2}.Layout
-	WSpacer3 = layout.Spacer{Width: SpaceUnit * 3}.Layout
-	WSpacer4 = layout.Spacer{Width: SpaceUnit * 4}.Layout
-	WSpacer5 = layout.Spacer{Width: SpaceUnit * 5}.Layout
-	WSpacer6 = layout.Spacer{Width: SpaceUnit * 6}.Layout
+	WSpacer05 = layout.Spacer{Width: SpaceUnit * 0.5}.Layout
+	WSpacer1  = layout.Spacer{Width: SpaceUnit}.Layout
+	WSpacer2  = layout.Spacer{Width: SpaceUnit * 2}.Layout
+	WSpacer3  = layout.Spacer{Width: SpaceUnit * 3}.Layout
+	WSpacer4  = layout.Spacer{Width: SpaceUnit * 4}.Layout
+	WSpacer5  = layout.Spacer{Width: SpaceUnit * 5}.Layout
+	WSpacer6  = layout.Spacer{Width: SpaceUnit * 6}.Layout
 )
 
 var (
