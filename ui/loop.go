@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"gioui.org/app"
 	"gioui.org/font"
@@ -67,7 +68,7 @@ func GetShaper() *text.Shaper {
 	return shaper
 }
 
-func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th *material.Theme), onDestory func()) {
+func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th *material.Theme, fps float64), onDestory func()) {
 	th := material.NewTheme()
 	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
 	th.Shaper = GetShaper()
@@ -78,11 +79,16 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
+	// fps
+	fps := &fpsCounter{lastTime: time.Now()}
+
 	go func() {
 		w := &app.Window{}
 		w.Option(
 			app.Title("oGio"),
-			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
+			// app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
+			app.Size(unit.Dp(1920), unit.Dp(1080)),
+			// app.Size(2560, 1440),
 		)
 
 		// Make a channel to read window events from.
@@ -146,7 +152,8 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 					// defer clip.Rect{Max: gtx.Constraints.Min}.Push(gtx.Ops).Pop()
 					// paint.Fill(gtx.Ops, th.Palette.Bg)
 					// render contents
-					fn(w, gtx, th)
+					fps.update()
+					fn(w, gtx, th, fps.fps)
 					// render frame
 					event.Frame(gtx.Ops)
 				}
@@ -184,5 +191,22 @@ func Screenshot(gtx layout.Context, filename string) {
 	}
 	if err := os.WriteFile(filename, buf.Bytes(), 0o666); err != nil {
 		log.Println("[Screenshot] ERROR saving file", filename)
+	}
+}
+
+type fpsCounter struct {
+	frames   int
+	lastTime time.Time
+	fps      float64
+}
+
+func (f *fpsCounter) update() {
+	f.frames++
+
+	current := time.Now()
+	if current.Sub(f.lastTime) > time.Second {
+		f.fps = float64(f.frames) / current.Sub(f.lastTime).Seconds()
+		f.frames = 0
+		f.lastTime = current
 	}
 }
