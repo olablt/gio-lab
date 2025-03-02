@@ -86,8 +86,8 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 		w := &app.Window{}
 		w.Option(
 			app.Title("oGio"),
-			// app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
-			app.Size(unit.Dp(1920), unit.Dp(1080)),
+			app.Size(unit.Dp(1920/2), unit.Dp(1080/2)),
+			// app.Size(unit.Dp(1920), unit.Dp(1080)),
 			// app.Size(2560, 1440),
 		)
 

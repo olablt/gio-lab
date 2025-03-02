@@ -5,7 +5,6 @@ import (
 	"image"
 	"log"
 	"strings"
-	"sync"
 
 	"gioui.org/io/event"
 	"gioui.org/io/key"
@@ -40,7 +39,7 @@ type CommandPalette struct {
 	KeyPress       bool
 	Key            key.Name
 	ClickableLayer *widget.Clickable
-	sync.Mutex
+	// sync.Mutex
 }
 
 type Command struct {
