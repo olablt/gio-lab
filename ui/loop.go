@@ -166,6 +166,8 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 				// 	// ed.SetText(newTextefresh:
 				// ed.SetText(newText)
 				w.Invalidate()
+				// Drain any pending refresh signals
+				drainRefreshChannel(refresh)
 			}
 		}
 
@@ -208,5 +210,20 @@ func (f *fpsCounter) update() {
 		f.fps = float64(f.frames) / current.Sub(f.lastTime).Seconds()
 		f.frames = 0
 		f.lastTime = current
+	}
+}
+
+// drainRefreshChannel consumes all pending messages from the refresh channel
+// to prevent the application from hanging when multiple refresh signals are sent
+func drainRefreshChannel(refresh chan struct{}) {
+	// Non-blocking drain of any pending refresh signals
+	for {
+		select {
+		case <-refresh:
+			// Consume the message but don't do anything
+		default:
+			// No more messages, exit the loop
+			return
+		}
 	}
 }
