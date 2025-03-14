@@ -162,16 +162,19 @@ func (cp *CommandPalette) Call(command string) {
 }
 
 // submit executes a command and resets the palette
-func (cp *CommandPalette) submit(command string) {
+func (cp *CommandPalette) submit(command string, gui bool) {
+	// return
 	// log.Printf("[CP] SUBMIT '%v'", cp.CommandsFiltered[cp.cursor])
-	log.Printf("[CP] SUBMIT '%v'", command)
+	log.Printf("[CP] SUBMIT '%v' gui:%v", command, gui)
 	// if the callback exists, call it
 	cp.Call(command)
 	// if OnSubmit is set, call it
 	if cp.OnSubmit != nil {
 		cp.OnSubmit()
 	}
-	cp.Reset()
+	if gui {
+		cp.Reset()
+	}
 }
 
 // HandleShortcutKeys checks for keyboard shortcuts and executes their commands
@@ -205,7 +208,7 @@ func (cp *CommandPalette) HandleShortcutKeys(gtx layout.Context) {
 			// log.Printf("[CP] got shortcut %v %v", ev.Modifiers, ev.Name)
 			filter := key.Filter{Name: ev.Name, Required: ev.Modifiers}
 			if command, ok := cp.keys[filter]; ok {
-				cp.submit(command)
+				cp.submit(command, false)
 			}
 		}
 	}
@@ -220,7 +223,7 @@ func (cp *CommandPalette) ProcessPointerEvents(gtx layout.Context) {
 	// loop through filtered list and check for clicks
 	for _, command := range cp.CommandsFiltered {
 		if cp.clickables[command.Name].Clicked(gtx) {
-			cp.submit(command.Name) // Use command.Name instead of command
+			cp.submit(command.Name, true) // Use command.Name instead of command
 		}
 	}
 }
@@ -283,8 +286,8 @@ func (cp *CommandPalette) ProcessKeyEvents(gtx layout.Context) {
 			// handle enter
 			if ev.Name == key.NameReturn {
 				if cp.cursor >= 0 {
-					cp.submit(cp.CommandsFiltered[cp.cursor].Name) // Use .Name here
-					cp.Reset()                                     // first submit and then reset
+					cp.submit(cp.CommandsFiltered[cp.cursor].Name, true) // Use .Name here
+					cp.Reset()                                           // first submit and then reset
 				}
 			}
 			// handle escape

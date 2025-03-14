@@ -68,7 +68,7 @@ func GetShaper() *text.Shaper {
 	return shaper
 }
 
-func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th *material.Theme, fps float64), onDestory func()) {
+func Loop(refresh chan struct{}, onFrame func(win *app.Window, gtx layout.Context, th *material.Theme, fps float64), onDestory func()) {
 	th := material.NewTheme()
 	// th.Shaper = text.NewShaper(text.NoSystemFonts(), text.WithCollection(gofont.Collection()))
 	th.Shaper = GetShaper()
@@ -153,7 +153,7 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 					// paint.Fill(gtx.Ops, th.Palette.Bg)
 					// render contents
 					fps.update()
-					fn(w, gtx, th, fps.fps)
+					onFrame(w, gtx, th, fps.fps)
 					// render frame
 					event.Frame(gtx.Ops)
 				}
@@ -162,12 +162,10 @@ func Loop(refresh chan struct{}, fn func(win *app.Window, gtx layout.Context, th
 				acks <- struct{}{}
 			case <-refresh:
 				// log.Println("refreshing...")
-				// case newText := <-someChannel:
-				// 	// ed.SetText(newTextefresh:
-				// ed.SetText(newText)
-				w.Invalidate()
 				// Drain any pending refresh signals
-				drainRefreshChannel(refresh)
+				// drainRefreshChannel(refresh)
+				// Invalidate the window to trigger a redraw
+				w.Invalidate()
 			}
 		}
 
@@ -213,17 +211,17 @@ func (f *fpsCounter) update() {
 	}
 }
 
-// drainRefreshChannel consumes all pending messages from the refresh channel
-// to prevent the application from hanging when multiple refresh signals are sent
-func drainRefreshChannel(refresh chan struct{}) {
-	// Non-blocking drain of any pending refresh signals
-	for {
-		select {
-		case <-refresh:
-			// Consume the message but don't do anything
-		default:
-			// No more messages, exit the loop
-			return
-		}
-	}
-}
+// // drainRefreshChannel consumes all pending messages from the refresh channel
+// // to prevent the application from hanging when multiple refresh signals are sent
+// func drainRefreshChannel(refresh chan struct{}) {
+// 	// Non-blocking drain of any pending refresh signals
+// 	for {
+// 		select {
+// 		case <-refresh:
+// 			// Consume the message but don't do anything
+// 		default:
+// 			// No more messages, exit the loop
+// 			return
+// 		}
+// 	}
+// }
